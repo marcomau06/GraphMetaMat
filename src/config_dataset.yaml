@@ -1,0 +1,91 @@
+dataset_RL:
+#    root_graph: /home/derek/Documents/MaterialSynthesis/data/marco_12042023/preprocessed_unitcell_True_mixed
+#    root_curve: /home/derek/Documents/MaterialSynthesis/data/marco_12042023/preprocessed_unitcell_True_mixed
+#    root_mapping: /home/derek/Documents/MaterialSynthesis/data/marco_12042023/preprocessed_unitcell_True_mixed
+#    root_graph: /home/derek/Documents/MaterialSynthesis/data/marco_08182023_ETH/preprocessed_unitcell_True_mixed
+#    root_curve: /home/derek/Documents/MaterialSynthesis/data/marco_08182023_ETH/preprocessed_unitcell_True_mixed
+#    root_mapping: /home/derek/Documents/MaterialSynthesis/data/marco_08182023_ETH/preprocessed_unitcell_True_mixed
+#    root_graph: /home/derek/Documents/MaterialSynthesis/data/marco_10052023_flipped/preprocessed_unitcell_True
+#    root_curve: /home/derek/Documents/MaterialSynthesis/data/marco_10052023_flipped/preprocessed_unitcell_True
+#    root_mapping: /home/derek/Documents/MaterialSynthesis/data/marco_10052023_flipped/preprocessed_unitcell_True
+#    root_graph: /home/derek/Documents/MaterialSynthesis/data/marco_10052023/preprocessed_unitcell_True
+#    root_curve: /home/derek/Documents/MaterialSynthesis/data/marco_10052023/preprocessed_unitcell_True
+#    root_mapping: /home/derek/Documents/MaterialSynthesis/data/marco_10052023/preprocessed_unitcell_True
+#    root_graph: /home/derek/Documents/MaterialSynthesis/data/marco_12142023_unseen/preprocessed_unitcell_True_mixed
+#    root_curve: /home/derek/Documents/MaterialSynthesis/data/marco_12142023_unseen/preprocessed_unitcell_True_mixed
+#    root_mapping: /home/derek/Documents/MaterialSynthesis/data/marco_12142023_unseen/preprocessed_unitcell_True_mixed
+#    root_graph: /home/derek/Documents/MaterialSynthesis/data/marco_02242024_PSU_unseen/preprocessed_unitcell_True_mixed
+#    root_curve: /home/derek/Documents/MaterialSynthesis/data/marco_02242024_PSU_unseen/preprocessed_unitcell_True_mixed
+#    root_mapping: /home/derek/Documents/MaterialSynthesis/data/marco_02242024_PSU_unseen/preprocessed_unitcell_True_mixed
+#    root_graph: /home/derek/Documents/MaterialSynthesis/data/marco_02142024_PSU/preprocessed_unitcell_True_mixed
+#    root_curve: /home/derek/Documents/MaterialSynthesis/data/marco_02142024_PSU/preprocessed_unitcell_True_mixed
+#    root_mapping: /home/derek/Documents/MaterialSynthesis/data/marco_02142024_PSU/preprocessed_unitcell_True_mixed
+    root_graph: /home/derek/Documents/MaterialSynthesis/data/marco_04292024_UCB_application/preprocessed_unitcell_True_mixed
+    root_curve: /home/derek/Documents/MaterialSynthesis/data/marco_04292024_UCB_application/preprocessed_unitcell_True_mixed
+    root_mapping: /home/derek/Documents/MaterialSynthesis/data/marco_04292024_UCB_application/preprocessed_unitcell_True_mixed
+
+dataset:
+    curve_norm_cfg:
+#        curve_method: null #unorm_max # max # slope # null
+        curve_method: max
+
+    root_graph: /home/derek/Documents/MaterialSynthesis/data/marco_03302024_UCB/preprocessed_unitcell_True
+    root_curve: /home/derek/Documents/MaterialSynthesis/data/marco_03302024_UCB/preprocessed_unitcell_True
+    root_mapping: /home/derek/Documents/MaterialSynthesis/data/marco_03302024_UCB/preprocessed_unitcell_True
+
+#    PSU
+#    root_graph: /home/derek/Documents/MaterialSynthesis/data/marco_02242024_PSU_unseen/preprocessed_unitcell_True_mixed
+#    root_curve: /home/derek/Documents/MaterialSynthesis/data/marco_02242024_PSU_unseen/preprocessed_unitcell_True_mixed
+#    root_mapping: /home/derek/Documents/MaterialSynthesis/data/marco_02242024_PSU_unseen/preprocessed_unitcell_True_mixed
+#    root_graph: /home/derek/Documents/MaterialSynthesis/data/marco_02142024_PSU/preprocessed_unitcell_True_mixed #_timedomain #_16buckets #preprocessed_unitcell_True
+#    root_curve: /home/derek/Documents/MaterialSynthesis/data/marco_02142024_PSU/preprocessed_unitcell_True_mixed #_timedomain #_16buckets #preprocessed_unitcell_True
+#    root_mapping: /home/derek/Documents/MaterialSynthesis/data/marco_02142024_PSU/preprocessed_unitcell_True_mixed #_timedomain #_16buckets #preprocessed_unitcell_True
+
+#    100K
+#    root_graph: /home/derek/Documents/MaterialSynthesis/data/marco_07232023_ETH/preprocessed_unitcell_True
+#    root_curve: /home/derek/Documents/MaterialSynthesis/data/marco_07232023_ETH/preprocessed_unitcell_True
+#    root_mapping: /home/derek/Documents/MaterialSynthesis/data/marco_07232023_ETH/preprocessed_unitcell_True
+
+#    900K
+#    root_graph: /home/derek/Documents/MaterialSynthesis/data/marco_08182023_ETH/preprocessed_unitcell_True_mixed
+#    root_curve: /home/derek/Documents/MaterialSynthesis/data/marco_08182023_ETH/preprocessed_unitcell_True_mixed
+#    root_mapping: /home/derek/Documents/MaterialSynthesis/data/marco_08182023_ETH/preprocessed_unitcell_True_mixed
+
+#    OoD
+#    root_graph: /home/derek/Documents/MaterialSynthesis/data/marco_11012023_RL/preprocessed_unitcell_True_mixed
+#    root_curve: /home/derek/Documents/MaterialSynthesis/data/marco_11012023_RL/preprocessed_unitcell_True_mixed
+#    root_mapping: /home/derek/Documents/MaterialSynthesis/data/marco_11012023_RL/preprocessed_unitcell_True_mixed
+
+#    FT
+#    root_graph: /home/derek/Documents/MaterialSynthesis/data/marco_10052023/preprocessed_unitcell_True
+#    root_curve: /home/derek/Documents/MaterialSynthesis/data/marco_10052023/preprocessed_unitcell_True
+#    root_mapping: /home/derek/Documents/MaterialSynthesis/data/marco_10052023/preprocessed_unitcell_True
+
+#    use_cosine_node: 0
+#    use_cosine_edge: 0
+    node_feat_cfg:
+        - x
+        - y
+        - z
+#        - x_proj
+#        - y_proj
+#        - z_proj
+#        - radius
+#        - ldp
+    edge_feat_cfg:
+         - l2_dist
+#         - radius
+    digitize_cfg: null
+#        bins:
+#            - -20.0
+#        n_freq: 16
+    augment_graph: false #false
+    augment_curve: false #true
+    batch_size: 128
+    num_workers: 0
+    train_split: train
+    valid_split: dev
+    test_split: test #test7
+    is_zscore_graph: true
+    is_zscore_curve_magni: true
+    is_zscore_curve_shape: true #true
