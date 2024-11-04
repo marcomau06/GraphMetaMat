@@ -40,10 +40,14 @@ class MLPDecoder(nn.Module):
         else:
             dim_li = [dim_out for _ in range(n_layers+1)]
             dim_li[0] = dim_in
-        assert dim_li[-1] == 2
-        dim_li[-1] = 1
-        self.mlp_C = MLP(dim_li, **kwargs)
-        self.mlp_n = MLP(dim_li, **kwargs)
+        if ETH_FULL_C_VECTOR:
+            dim_li[-1] = 10
+            self.mlp = MLP(dim_li, **kwargs)
+        else:
+            assert dim_li[-1] == 2
+            dim_li[-1] = 1
+            self.mlp_C = MLP(dim_li, **kwargs)
+            self.mlp_n = MLP(dim_li, **kwargs)
         self.bn = nn.BatchNorm1d(dim_in)
         self.clamp = DifferentiableClamp().apply
 

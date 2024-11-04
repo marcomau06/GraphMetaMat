@@ -617,10 +617,10 @@ class GraphCurveDataset(Dataset):
             c['curve'][:, 1] = digital_curve.astype(int)
 
 
-        # if ETH_FULL_C_VECTOR:
-        #     c['curve'] = torch.cat((torch.tensor([[0],[1]]), c['curve']), dim=1)
-        # else:
-        c['curve'][:, 1][c['curve'][:,1] < -40.0] = -40.0
+        if ETH_FULL_C_VECTOR:
+            c['curve'] = torch.cat((torch.tensor([[0],[1]]), torch.tensor(c['curve'])), dim=1)
+        else:
+            c['curve'][:, 1][c['curve'][:,1] < -40.0] = -40.0
         c_magnitude, c_shape = get_curve(c['curve'], **self.curve_norm_cfg)
 
         if is_zscore_curve_magni:

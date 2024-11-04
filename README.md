@@ -34,68 +34,6 @@ optuna==3.3.0
 
 You can download the datasets from: https://drive.google.com/drive/folders/1EU9J5GGPbQTALEEXPhzRRmrfRxGZi1jJ?usp=drive_link.
 
-### Preprocessing ETH Dataset (Pretraining Dataset)
-
-Save the dataset to a directory in the following style: 
-
-```
-/[path_to_data]/ETH/Fine_tuning_data/ETHunifying_cubic_100k_rho15.json
-```
-
-Open `dataset_preprocessing.py` and ensure the following variables are set:
-
-```
-PSU_dataset = False
-ETH_dataset = True
-dn_dataset = '/[path_to_data]/ETH'
-mix_dataset = True
-```
-
-Run `$ python3 dataset_preprocessing.py`.
-
-### Preprocessing Stress-Strain Curve Dataset (Fine-tuning Dataset and RL Dataset)
-
-Save the dataset to a directory in the following style: 
-
-```
-/[path_to_data]/StressStrain/Fine_tuning_data/c_N3_4_D5_FLX_str30_2kGs_randrho.json
-/[path_to_data]/StressStrain/Fine_tuning_data/cubic_N3_4_D5_FLEXIBLE_strain30pct_rho5_15_25pct_400graphs.json
-```
-
-Open `dataset_preprocessing.py` and ensure the following variables are set:
-
-```
-PSU_dataset = False
-ETH_dataset = False
-dn_dataset = '/[path_to_data]/StressStrain'
-mix_dataset = False
-```
-
-Run `$ python3 dataset_preprocessing.py`.
-
-<!---
-
-### Preprocessing Transmission Curve Dataset (Fine-tuning Dataset)
-
-Save the dataset to a directory in the following style: 
-
-```
-/[path_to_data]/Transmission/Fine_tuning_data/cubic_N3_4_D5_TMPTA_TL_random_rho_1333cells.json
-```
-
-Open `dataset_preprocessing.py` and ensure the following variables are set:
-
-```
-PSU_dataset = True
-ETH_dataset = False
-dn_dataset = '/[path_to_data]/Transmission'
-mix_dataset = False
-```
-
-Run `$ python3 dataset_preprocessing.py`.
-
--->
-
 ## Specifying CPU or GPU
 
 Set the flag in `src/config_general.yaml` as follows:
@@ -121,6 +59,21 @@ Open the specified `src/*.yaml` files and ensure the following variables are set
 load_model: null
 log_dir: /[existing_empty_log_directory]
 
+optimizer:
+    optimizer_name: AdamW
+    optimizer_args:
+      lr: 0.001 # 0.001
+      eps: 1.0e-08
+      weight_decay: 0.01 # 0.0005
+
+forward:
+  train_config:
+    use_contrastive: False
+    num_epochs: 10
+    num_epochs_per_valid: 1
+    best_checkpoint_metric: r2_mae
+    use_snapshot: null
+
 # config_dataset.yaml
 dataset:
     curve_norm_cfg:
@@ -134,6 +87,9 @@ forward_model:
   loss_coeff:
     magnitude_coeff: 1.0
     shape_coeff: 0.0
+    
+# config.py
+ETH_FULL_C_VECTOR = True
 ```
 
 Run `$ python3 main_forward.py`.
@@ -158,13 +114,11 @@ dataset:
 # config_model.yaml
 forward_model:
   loss_coeff:
-    magnitude_coeff: 0.0 # tunable but should be >0.0
-    shape_coeff: 1.0 # tunable but should be >0.0
+    magnitude_coeff: 0.6 # tunable but should be >0.0
+    shape_coeff: 0.4 # tunable but should be >0.0
 ```
 
 Run `$ python3 main_forward.py`.
-
-<!---
 
 ### Transmission Fine-tuning
 
