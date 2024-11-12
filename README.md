@@ -34,9 +34,38 @@ optuna==3.3.0
 
 You can download the datasets from: https://drive.google.com/drive/folders/1Vl5Bhjhss7YOZdxGr1FWZXsZX20l2Ln5?usp=sharing.
 
-## Specifying CPU or GPU
+# Usage
 
-Set the flag in `src/config_general.yaml` as follows:
+Update the filepath in `src/config.py` as follows:
+
+```
+SRC_DIR=/path/to/GraphMetaMat
+```
+
+Modify the filepaths in `config_dataset.yaml`:
+
+```
+dataset_RL:
+    root_graph: /path/to/data_inverse or null
+    root_curve: /path/to/data_inverse or null
+    root_mapping: /path/to/data_inverse or null
+
+dataset:
+    root_graph: /path/to/data_forward or null
+    root_curve: /path/to/data_forward or null
+    root_mapping: /path/to/data_forward or null
+```
+
+Modify the filepaths in `config_general.yaml`:
+
+```
+load_model: /path/to/forward_model or null
+load_model_IL: /path/to/inverse_model or null
+load_model_RL: /path/to/inverse_model or null
+log_dir: /path/to/newly_created_log_directory
+```
+
+To choose a particular device, modify the flag in `src/config_general.yaml` as follows:
 
 ```
 device: cpu             # if using CPU
@@ -44,163 +73,68 @@ device: cuda            # if using one GPU
 device: cuda:[gpu_id]   # if using multiple GPUs
 ```
 
-# Usage
+## Inference
 
-## Forward Model Instructions
+Update the configuration in `src/config.py` as follows:
+```
+ETH_FULL_C_VECTOR = False
+```
 
-Modify the config files based on which dataset is used for training.
+### Stress-Strain Curve
+
+Update the configuration in `src/config.py` as follows:
+```
+TASK = 'stress_strain'
+```
+
+Replace the config files in `src/*.yaml` with  the config files from `logs/inference/stress-strain/*.yaml`. Modify the file paths as described above.
+
+### Transmission Curve
+
+Update the configuration in `src/config.py` as follows:
+```
+TASK = 'transmission'
+```
+
+Replace the config files in `src/*.yaml` with  the config files from `logs/inference/transmission/*.yaml`. Modify the file paths as described above.
+
+## Training (Experimental)
 
 ### Pretraining
 
-Open the specified `src/*.yaml` files and ensure the following variables are set:
-
+Update the configuration in `src/config.py` as follows:
 ```
-# config_general.yaml
-load_model: null
-log_dir: /[existing_empty_log_directory]
-
-optimizer:
-    optimizer_name: AdamW
-    optimizer_args:
-      lr: 0.001 # 0.001
-      eps: 1.0e-08
-      weight_decay: 0.01 # 0.0005
-
-forward:
-  train_config:
-    use_contrastive: False
-    num_epochs: 10
-    num_epochs_per_valid: 1
-    best_checkpoint_metric: r2_mae
-    use_snapshot: null
-
-# config_dataset.yaml
-dataset:
-    curve_norm_cfg:
-        curve_method: max
-    root_graph: /[path_to_data]/ETH/preprocessed_unitcell_True
-    root_curve: /[path_to_data]/ETH/preprocessed_unitcell_True
-    root_mapping: /[path_to_data]/ETH/preprocessed_unitcell_True
-
-# config_model.yaml
-forward_model:
-  loss_coeff:
-    magnitude_coeff: 1.0
-    shape_coeff: 0.0
-    
-# config.py
 ETH_FULL_C_VECTOR = True
+TASK = 'stress_strain'
 ```
 
-Run `$ python3 main_forward.py`.
+Replace the config files in `src` with  the config files from `logs/pretraining/*.yaml`. Modify the file paths as described above.
 
-### Stress-Strain Fine-tuning
+Run the command: `$ python3 main_forward.py`
 
-Open the specified `src/*.yaml` files and ensure the following variables are set:
+### Finetuning
 
-```
-# config_general.yaml
-load_model: /[pretrained_models_log_directory] # to turn off pretraining set to null
-log_dir: /[existing_empty_log_directory]
-
-# config_dataset.yaml
-dataset:
-    curve_norm_cfg:
-        curve_method: max
-    root_graph: /[path_to_data]/ETH/preprocessed_unitcell_True
-    root_curve: /[path_to_data]/ETH/preprocessed_unitcell_True
-    root_mapping: /[path_to_data]/ETH/preprocessed_unitcell_True
-
-# config_model.yaml
-forward_model:
-  loss_coeff:
-    magnitude_coeff: 0.6 # tunable but should be >0.0
-    shape_coeff: 0.4 # tunable but should be >0.0
-```
-
-Run `$ python3 main_forward.py`.
-
-### Transmission Fine-tuning
-
-Open the specified `src/*.yaml` files and ensure the following variables are set:
+Update the configuration in `src/config.py` as follows (`$task='stress_strain'` for stress strain and `$task='transmission'` for transmission):
 
 ```
-# config_general.yaml
-load_model: /[pretrained_models_log_directory] # to turn off pretraining set to null
-log_dir: /[existing_empty_log_directory]
-
-# config_dataset.yaml
-dataset:
-    curve_norm_cfg:
-        curve_method: max
-    root_graph: /[path_to_data]/ETH/preprocessed_unitcell_True
-    root_curve: /[path_to_data]/ETH/preprocessed_unitcell_True
-    root_mapping: /[path_to_data]/ETH/preprocessed_unitcell_True
-
-# config_model.yaml
-forward_model:
-  loss_coeff:
-    magnitude_coeff: 0.0
-    shape_coeff: 1.0
+ETH_FULL_C_VECTOR = False
+TASK = $task
 ```
 
-Run `$ python3 main_forward.py`.
+Replace the config files in `src` with  the config files from `logs/finetuning_UCB/*.yaml` for stress strain and `logs/finetuning_PSU/*.yaml` for transmission. Modify the file paths as described above.
 
--->
+Run the command: `$ python3 main_forward.py`
+
+### Imitation and Reinforcement Learning
 
 
-## Inverse Model Instructions
-
-Modify the config files based on which dataset is used for training.
-
-### Stress-Strain RL Training
-
-Open the specified `src/*.yaml` files and ensure the following variables are set:
+Update the configuration in `src/config.py` as follows (`$task='stress_strain'` for stress strain and `$task='transmission'` for transmission):
 
 ```
-# config_general.yaml
-load_model: /[finetuned_models_log_directory]
-log_dir: /[existing_empty_log_directory]
-inverse:
-  search:
-    magnitude_coeff: -1.0 # tunable but should be <0.0
-    shape_coeff: -1.0 # tunable but should be <0.0
-
-# config_dataset.yaml
-dataset:
-    curve_norm_cfg:
-        curve_method: max
-    root_graph: /[path_to_data]/ETH/preprocessed_unitcell_True
-    root_curve: /[path_to_data]/ETH/preprocessed_unitcell_True
-    root_mapping: /[path_to_data]/ETH/preprocessed_unitcell_True
+ETH_FULL_C_VECTOR = False
+TASK = $task
 ```
 
-Run `$ python3 main_inverse.py`.
+Replace the config files in `src` with  the config files from `logs/ILRL_UCB/*.yaml` for stress strain and `logs/ILRL_PSU/*.yaml` for transmission. Modify the file paths as described above.
 
-<!---
-
-### Transmission RL Training
-
-Open the specified `src/*.yaml` files and ensure the following variables are set:
-
-```
-# config_general.yaml
-load_model: /[finetuned_models_log_directory]
-log_dir: /[existing_empty_log_directory]
-inverse:
-  search:
-    magnitude_coeff: 0.0
-    shape_coeff: -1.0
-
-# config_dataset.yaml
-dataset:
-    curve_norm_cfg:
-        curve_method: max
-    root_graph: /[path_to_data]/ETH/preprocessed_unitcell_True
-    root_curve: /[path_to_data]/ETH/preprocessed_unitcell_True
-    root_mapping: /[path_to_data]/ETH/preprocessed_unitcell_True
-```
-
-Run `$ python3 main_inverse.py`.
-
--->
+Run the command: `$ python3 main_inverse.py`

@@ -2,6 +2,7 @@ import yaml
 import os
 import shutil
 
+TASK = 'transmission'
 ETH_FULL_C_VECTOR = False
 
 def check_conflicting_keys(d1, d2, d1_nm, d2_nm):
@@ -16,7 +17,7 @@ def check_conflicting_keys(d1, d2, d1_nm, d2_nm):
         print(f'conflicting keys between {d1_nm} and {d2_nm}: {conflicting_keys}')
         return False
 
-SRC_DIR = '/home/derek/Documents/MaterialSynthesis/src'
+SRC_DIR = '/home/derek/Documents/GraphMetaMat/src'
 # SRC_DIR = '/workspace/MaterialSynthesis/src'
 #SRC_DIR = r'\Desktop\DiscoveryProject\MaterialSynthesis'
 

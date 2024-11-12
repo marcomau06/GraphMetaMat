@@ -11,7 +11,7 @@ from src.dataset import GraphObjCollatedv2
 from src.utils import plot_3d, PLUS_MINUS, CObj, to_item, rho3r
 from src.dataset_preprocessing_collated import DATASET_CFG
 from src.dataset import ACTION_SPACE, ACTION_CONSTRAINTS, TETRAHEDRON
-from src.config import args
+from src.config import args, TASK
 DEVICE = args['device']
 
 NODES = 'nodes'
@@ -608,42 +608,43 @@ def get_reward_helper(curve_true, model_surrogate_prediction, search_cfg, datase
     #     torch.abs(dataset.dataset.unnormalize_curve(
     #         curve_true.c_magnitude, curve_true.c_shape)[0])
 
-    union = torch.where(torch.ge(c_true,c_pred), c_true, c_pred).squeeze(2)
-    intersection = torch.where(torch.ge(c_true,c_pred), c_pred, c_true).squeeze(2)
-    r_jaccard = torch.sum(intersection, dim=-1) / torch.sum(union, dim=-1)
-    r_main = r_jaccard
+    if TASK == 'stress_strain':
+        union = torch.where(torch.ge(c_true,c_pred), c_true, c_pred).squeeze(2)
+        intersection = torch.where(torch.ge(c_true,c_pred), c_pred, c_true).squeeze(2)
+        r_jaccard = torch.sum(intersection, dim=-1) / torch.sum(union, dim=-1)
+        r_main = r_jaccard
+    elif TASK == 'transmission':
+        if dataset.dataset.digitize_cfg is None:
+            # c_pred += 40.0
+            # c_true += 40.0
+            # numer = torch.abs(c_pred - c_true).squeeze(-1)
+            # denom = (c_true.squeeze(-1).max(dim=-1)[0] - c_true.squeeze(-1).min(dim=-1)[0]).unsqueeze(-1)
+            # r_main = (numer/denom).mean(-1)
+            # c_pred -= 40.0
+            # c_true -= 40.0
+            c_pred_ = torch.clamp(c_pred+40.0, min=0.0)
+            c_true_ = torch.clamp(c_true+40.0, min=0.0)
+            union = torch.where(torch.ge(c_true_,c_pred_), c_true_, c_pred_).squeeze(2)
+            intersection = torch.where(torch.ge(c_true_,c_pred_), c_pred_, c_true_).squeeze(2)
+            # w = torch.tensor(([1.0]*64) + ([1/6]*(256-64)), device=union.device).unsqueeze(0)
+            r_jaccard = torch.sum(intersection, dim=-1) / torch.sum(union, dim=-1)
+            if any(r_jaccard > 1.0):
+                asdf = None
+            r_main = r_jaccard
+        else:
+            if not skip_processing:
+                c_pred = dataset.dataset.digitize_curve_torch(c_pred).unsqueeze(-1)
 
-    # if dataset.dataset.digitize_cfg is None:
-    #     # c_pred += 40.0
-    #     # c_true += 40.0
-    #     # numer = torch.abs(c_pred - c_true).squeeze(-1)
-    #     # denom = (c_true.squeeze(-1).max(dim=-1)[0] - c_true.squeeze(-1).min(dim=-1)[0]).unsqueeze(-1)
-    #     # r_main = (numer/denom).mean(-1)
-    #     # c_pred -= 40.0
-    #     # c_true -= 40.0
-    #     c_pred_ = torch.clamp(c_pred+40.0, min=0.0)
-    #     c_true_ = torch.clamp(c_true+40.0, min=0.0)
-    #     union = torch.where(torch.ge(c_true_,c_pred_), c_true_, c_pred_).squeeze(2)
-    #     intersection = torch.where(torch.ge(c_true_,c_pred_), c_pred_, c_true_).squeeze(2)
-    #     # w = torch.tensor(([1.0]*64) + ([1/6]*(256-64)), device=union.device).unsqueeze(0)
-    #     r_jaccard = torch.sum(intersection, dim=-1) / torch.sum(union, dim=-1)
-    #     if any(r_jaccard > 1.0):
-    #         asdf = None
-    #     r_main = r_jaccard
-    # else:
-    #     if not skip_processing:
-    #         c_pred = dataset.dataset.digitize_curve_torch(c_pred).unsqueeze(-1)
-    #
-    #     bin, = [float(x) for x in dataset.dataset.digitize_cfg['bins']]
-    #
-    #     if PSU_specific_train_reward:
-    #         r_main = \
-    #             (torch.logical_xor(
-    #                 c_true.to(torch.bool),
-    #                 torch.gt(c_pred, bin)).float() * -torch.abs(c_pred-bin)
-    #             ).squeeze(dim=-1).mean(dim=-1)
-    #     else:
-    #         r_main = (c_pred == c_true).float().squeeze(dim=-1).mean(dim=-1)
+            bin, = [float(x) for x in dataset.dataset.digitize_cfg['bins']]
+
+            if PSU_specific_train_reward:
+                r_main = \
+                    (torch.logical_xor(
+                        c_true.to(torch.bool),
+                        torch.gt(c_pred, bin)).float() * -torch.abs(c_pred-bin)
+                    ).squeeze(dim=-1).mean(dim=-1)
+            else:
+                r_main = (c_pred == c_true).float().squeeze(dim=-1).mean(dim=-1)
 
     # r_main = \
     #     ((2*torch.logical_xor(
