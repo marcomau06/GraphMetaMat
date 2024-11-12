@@ -30,6 +30,12 @@ dtaidistance==2.3.10
 optuna==3.3.0
 ```
 
+## Models and Configurations
+
+You can download the models and configurations from: https://drive.google.com/drive/folders/1KLJfp8dODqC7Ua4AzwF6ggcjVHnZdGvk?usp=drive_link.
+
+Place it in the following directory structure: `GraphMetaMat/logs`
+
 ## Datasets
 
 You can download the datasets from: https://drive.google.com/drive/folders/1Vl5Bhjhss7YOZdxGr1FWZXsZX20l2Ln5?usp=sharing.
@@ -56,7 +62,7 @@ dataset:
     root_mapping: /path/to/data_forward or null
 ```
 
-Modify the filepaths in `config_general.yaml`:
+Modify the filepaths in `config_general.yaml` (**We recommend creating a new log directory for each experiment**):
 
 ```
 load_model: /path/to/forward_model or null
@@ -75,28 +81,25 @@ device: cuda:[gpu_id]   # if using multiple GPUs
 
 ## Inference
 
-Update the configuration in `src/config.py` as follows:
-```
-ETH_FULL_C_VECTOR = False
-```
-
 ### Stress-Strain Curve
 
 Update the configuration in `src/config.py` as follows:
 ```
+ETH_FULL_C_VECTOR = False
 TASK = 'stress_strain'
 ```
 
-Replace the config files in `src/*.yaml` with  the config files from `logs/inference/stress-strain/*.yaml`. Modify the file paths as described above.
+Replace the config files in `src/*.yaml` with  the config files from `logs/inference/inverse_stressstrain/*/*.yaml`. Modify the file paths as described above.
 
 ### Transmission Curve
 
 Update the configuration in `src/config.py` as follows:
 ```
+ETH_FULL_C_VECTOR = False
 TASK = 'transmission'
 ```
 
-Replace the config files in `src/*.yaml` with  the config files from `logs/inference/transmission/*.yaml`. Modify the file paths as described above.
+Replace the config files in `src/*.yaml` with  the config files from `logs/inference/inverse_transmission/*/*.yaml`. Modify the file paths as described above.
 
 ## Training (Experimental)
 
@@ -121,7 +124,7 @@ ETH_FULL_C_VECTOR = False
 TASK = $task
 ```
 
-Replace the config files in `src` with  the config files from `logs/finetuning_UCB/*.yaml` for stress strain and `logs/finetuning_PSU/*.yaml` for transmission. Modify the file paths as described above.
+Replace the config files in `src` with  the config files from `logs/finetuning_stressstrain/*.yaml` for stress strain and `logs/finetuning_transmission/*.yaml` for transmission. Modify the file paths as described above.
 
 Run the command: `$ python3 main_forward.py`
 
@@ -135,6 +138,6 @@ ETH_FULL_C_VECTOR = False
 TASK = $task
 ```
 
-Replace the config files in `src` with  the config files from `logs/ILRL_UCB/*.yaml` for stress strain and `logs/ILRL_PSU/*.yaml` for transmission. Modify the file paths as described above.
+Replace the config files in `src` with  the config files from `logs/ILRL_stressstrain/*.yaml` for stress strain and `logs/ILRL_transmission/*.yaml` for transmission. Modify the file paths as described above.
 
 Run the command: `$ python3 main_inverse.py`
