@@ -2,7 +2,7 @@ import yaml
 import os
 import shutil
 
-TASK = 'transmission'
+TASK = 'stress_strain'
 ETH_FULL_C_VECTOR = False
 
 def check_conflicting_keys(d1, d2, d1_nm, d2_nm):

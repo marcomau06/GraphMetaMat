@@ -55,7 +55,7 @@ def plot_pred(graph_progress_li, graph_pred_li, g_dict_li, c_dict_li, c_dict_bg,
             break
 
 
-def test(dataset_test, dataset_train, policy, model_surrogate, search_cfg, num_runs, device, skip_g_prog, g_train_best_li=None, **kwargs):
+def test(dataset_test, dataset_forward, policy, model_surrogate, search_cfg, num_runs, device, skip_g_prog, g_train_best_li=None, **kwargs):
     tnsr2np = lambda x: x.view(-1).detach().cpu().numpy()
     global rewards_li
     policy.eval()
@@ -75,7 +75,7 @@ def test(dataset_test, dataset_train, policy, model_surrogate, search_cfg, num_r
             model_surrogate.inference(graph_true)
 
         cur_iter += 1
-        graph_kernel_true = g_train_best_li[bid][0] if g_train_best_li is not None else None
+        graph_kernel_true = None
         with torch.no_grad():
             reward_cumsum_best, graph_pred_best, curve_pred_best, progress_best = \
                 run_search_mcts(
@@ -84,12 +84,13 @@ def test(dataset_test, dataset_train, policy, model_surrogate, search_cfg, num_r
                         'graph_true':graph_true,
                         'policy':policy,
                         'model_surrogate':model_surrogate,
-                        'g_stats':dataset_train.dataset.g_stats,
-                        'c_stats':dataset_train.dataset.c_stats,
+                        'g_stats':dataset_forward.dataset.g_stats,
+                        'c_stats':dataset_forward.dataset.c_stats,
                         'node_feats_index':dataset_test.dataset.node_feats_index,
                         'edge_feats_index':dataset_test.dataset.edge_feats_index,
                         'search_cfg':search_cfg,
-                        'dataset':dataset_test,
+                        'dataset_forward': dataset_forward,
+                        'dataset_inverse':dataset_test,
                         'device':device,
                         'n_samples_rho':16
                     },
@@ -106,25 +107,25 @@ def test(dataset_test, dataset_train, policy, model_surrogate, search_cfg, num_r
         c_magnitude_pred_std = curve_pred_best.c_magnitude_std
         c_shape_pred_std = curve_pred_best.c_shape_std
         c_tred_li, c_tred_UBLB = \
-            dataset_test.dataset.unnormalize_curve(
+            dataset_forward.dataset.unnormalize_curve(
                 c_magnitude_tred, c_shape_tred,
                 c_magnitude_u=c_magnitude_tred_std,
                 c_shape_u=c_shape_tred_std)
         c_pred_li, c_pred_UBLB = \
-            dataset_test.dataset.unnormalize_curve(
+            dataset_forward.dataset.unnormalize_curve(
                 c_magnitude_pred, c_shape_pred,
                 c_magnitude_u=c_magnitude_pred_std,
                 c_shape_u=c_shape_pred_std)
         c_true_li, _ = \
-            dataset_test.dataset.unnormalize_curve(c_magnitude_true, c_shape_true)
+            dataset_forward.dataset.unnormalize_curve(c_magnitude_true, c_shape_true)
 
         for i, (g, c_pred, c_tred, c_true) in \
                 enumerate(zip(graph_true.g_li, c_pred_li, c_tred_li, c_true_li)):
             if 'digitize_cfg' in args['dataset'] and args['dataset']['digitize_cfg'] is not None:
                 c_true_dataset = tnsr2np(c_true)
-                c_true = dataset_test.dataset.get_unnormalized_curve_from_cid(g.graph['gid'])
-                assert np.all(dataset_test.dataset.digitize_curve_np(np.expand_dims(c_true, axis=0))[0] == c_true_dataset), \
-                    print(dataset_test.dataset.digitize_curve_np(np.expand_dims(c_true, axis=0))[0], c_true_dataset)
+                c_true = dataset_forward.dataset.get_unnormalized_curve_from_cid(g.graph['gid'])
+                assert np.all(dataset_forward.dataset.digitize_curve_np(np.expand_dims(c_true, axis=0))[0] == c_true_dataset), \
+                    print(dataset_forward.dataset.digitize_curve_np(np.expand_dims(c_true, axis=0))[0], c_true_dataset)
             else:
                 c_true = tnsr2np(c_true)
             g_dict_li.append({'True': g})
@@ -276,7 +277,6 @@ def run_search_mcts(kwargs_search, num_runs, graph_kernel_true, cpuct=2.5):
             run_search(
                 **kwargs_search, action_li=action_li, mcts_obj=mcts_obj,
                 log_buffer=False, log_progress=True, log_logits=False, log_logprob=False)
-        mcts_obj.commit_search(reward)
 
         indices_to_update = torch.ge(reward, reward_cumsum_best)
         if torch.mean(reward) > torch.mean(reward_cumsum_best):
@@ -328,7 +328,7 @@ class MCTSObj:
 
         out_li = []
         score_li = []
-        for i, (h, baseline, prob, mask) in enumerate(zip(self.h_li, self.baseline_li, probs, masks)): # looping through batch
+        for bid, (h, baseline, prob, mask) in enumerate(zip(self.h_li, self.baseline_li, probs, masks)): # looping through batch
             action_li = mask.nonzero().view(-1).detach().cpu().tolist() # indices of valid actions 1 x |validA|
             probs_li = prob[mask].detach().cpu().numpy() # probs of valid actions 1 x |validA|
             score = []
@@ -339,9 +339,11 @@ class MCTSObj:
                 score.append(Q + self.cpuct * p/(1+N))
             score = np.array(score)
             if action is None:
-                out_li.append(action_li[score.argmax()])
+                action_id = np.random.choice(np.flatnonzero(score == score.max()))
+                out_li.append(action_li[action_id])
+                # out_li.append(action_li[score.argmax()])
             else:
-                out_li.append(action[i])
+                out_li.append(action[bid])
             score_li.append(score)
         return out_li, score_li
 
@@ -378,9 +380,9 @@ class MCTSObj:
 
 def run_search(
         curve_true, graph_true, policy, model_surrogate, g_stats, c_stats,
-        node_feats_index, edge_feats_index, search_cfg, dataset,
+        node_feats_index, edge_feats_index, search_cfg, dataset_forward, dataset_inverse,
         device=None, action_li=None, mcts_obj=None, n_samples_rho=16,
-        log_buffer=False, log_progress=False, log_logits=False, log_logprob=False, PSU_specific_train_reward=True):
+        log_buffer=False, log_progress=False, log_logits=False, log_logprob=False, PSU_specific_train_reward=False):
     buffer = defaultdict(list)
     progress_li = []
     logits_li = []
@@ -403,7 +405,7 @@ def run_search(
         next_state, reward, graph, curve = \
             run_environment_collated(
                 action_type, action, cur_state, model_surrogate, graph_true, g_stats,
-                node_feats_index, edge_feats_index, search_cfg, dataset,
+                node_feats_index, edge_feats_index, search_cfg, dataset_forward, dataset_inverse,
                 PSU_specific_train_reward=PSU_specific_train_reward, device=device)
         # entropy = sample_entropy(action_type, logits, action)
         reward_cumsum = reward_cumsum + reward

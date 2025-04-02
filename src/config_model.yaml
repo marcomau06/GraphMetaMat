@@ -1,70 +1,63 @@
 forward_model:
-  dim: 128 # 64
+  dim: 128
   encoder_cfg:
-    n_layers: 4 #4
-    conv_type: MPNN #EGNN #MPNN #EGNN #MPNN #IGNN #MPNN #crystal #MPNN #GCN #GAT
-    norm_type: GraphNorm # GraphNorm BatchNorm
-    act: SiLU # ELU
+    n_layers: 4
+    conv_type: MPNN
+    norm_type: GraphNorm
+    act: SiLU
     skip: true
     dropout: 0.0
   pooler_cfg:
     merge_name: CAT
-    pool_name: ATT #SUM
-  decoder_shape_nm: CNNLSTMDecoderOriginal #DeepONet #CNNLSTMDecoderOriginal
+    pool_name: ATT
+  decoder_shape_nm: CNNLSTMDecoderOriginal
   decoder_shape_cfg:
-    n_layers_cnn: 2 #6 [1,8]
-    use_nonlinearity: True # [F,T]
-    n_start_tokens: 4 # [1,256]
-    kernel_size: 8 # [1,8]
-    n_layers_rnn: 1 # [1,8]
-    module_rnn: GRU #LSTM
+    n_layers_cnn: 2
+    use_nonlinearity: True
+    n_start_tokens: 4
+    kernel_size: 8
+    n_layers_rnn: 1
+    module_rnn: GRU
     stride: 8
   decoder_magnitude_nm: MLPDecoder
   decoder_magitude_cfg:
-    n_layers: 5 #5
-    dropout: 0.0 #0.28
+    n_layers: 5
+    dropout: 0.0
     use_skip: true
     use_norm: true
     act: SiLU
   loss_name: mse
   loss_coeff:
-    main_coeff: 0.0 #10.0
-    magnitude_coeff: 0.6 #0.0 # 0.6
-    shape_coeff: 0.4 #1.0 # 0.4
-    smoothness_coeff: 0.0 # 0.0002 # 0.001 # 0.001
+    main_coeff: 0.0
+    magnitude_coeff: 0.6
+    shape_coeff: 0.4
+    smoothness_coeff: 0.0
 
 policy_network:
   dim: 256
   encoder_graph_cfg:
-    n_layers: 3 # asdf 3
-    conv_type: GAT #EGNN #IGNN #MPNN #crystal #MPNN #GCN #GAT
-    norm_type: GraphNorm # GraphNorm BatchNorm
-    act: SiLU # ELU
+    n_layers: 3
+    conv_type: GAT
+    norm_type: GraphNorm
+    act: SiLU
     skip: true
     dropout: 0.0
   encoder_curve_cfg:
     mlp_magnitude_cfg:
       n_layers: 7
-      dropout: 0.0 #0.35
+      dropout: 0.0
       use_skip: true
-      use_norm: true #true
+      use_norm: true
       act: SiLU
     cnn_shape_cfg:
-      use_norm: true #true
+      use_norm: true
     mlp_shape_magnitude_cfg:
       ins: both
-#      ins: shape
       n_layers: 1
-      dropout: 0.0 #0.35
+      dropout: 0.0
       use_skip: true
-      use_norm: true #true
+      use_norm: true
       act: SiLU
-#  pooler_cfg:
-#    merge_inputs:
-#      nodes: ATT
-#      edges: null
-#      rho: null
-#    merge_method: null
   mlp_state_action_cfg:
     n_layers: 1
     dropout: 0.0

@@ -25,6 +25,78 @@ NUM_CONSTRAINTS = NUM_FACES_CONSTRAINTS + NUM_SIZE_CONSTRAINTS
 
 ACTION_CONSTRAINTS_HASH = torch.pow(2, torch.arange(NUM_FACES_CONSTRAINTS)).view(-1,1)
 
+
+##############################################################
+# State and Action Definition
+##############################################################
+
+class LogitGraphObj:
+    def __init__(self, logits_stop, logits_aid_start, logits_aid_end):
+        self.logits_stop = logits_stop
+        self.logits_aid_start = logits_aid_start
+        self.logits_aid_end = logits_aid_end
+
+    def to(self, device):
+        self.logits_stop = self.logits_stop.to(device)
+        self.logits_aid_start = self.logits_aid_start.to(device)
+        self.logits_aid_end = self.logits_aid_end.to(device)
+
+class ActionGraphObj:
+    def __init__(self, aid_stop, aid_start, aid_end):
+        self.aid_stop = aid_stop
+        self.aid_start = aid_start
+        self.aid_end = aid_end
+
+    def to(self, device):
+        self.aid_stop = self.aid_stop.to(device)
+        self.aid_start = self.aid_start.to(device)
+        self.aid_end = self.aid_end.to(device)
+
+class StateCollated():
+    def __init__(self, graph_collated, rho_collated, curve_collated,
+                 constraints, done_graph, done_rho, g_stats, c_stats):
+        self.graph_collated = graph_collated
+        self.rho_collated = rho_collated
+        self.curve_collated = curve_collated
+        self.constraints = constraints
+        self.done_graph = done_graph
+        self.done_rho = done_rho
+        self.g_stats = g_stats
+        self.c_stats = c_stats
+
+    def __len__(self):
+        return len(self.curve_collated)
+
+    def is_done_graph(self):
+        return False not in self.constraints
+
+    def is_done_rho(self):
+        return self.rho_collated is not None
+
+    def get_curve(self):
+        return self.curve_collated
+
+    def to(self, device):
+        if self.graph_collated is not None:
+            self.graph_collated.to(device)
+        if self.curve_collated is not None:
+            self.curve_collated.to(device)
+        if self.rho_collated is not None:
+            self.rho_collated = self.rho_collated.to(device)
+        if self.constraints is not None:
+            self.constraints = self.constraints.to(device)
+
+    @classmethod
+    def init_initial_state(cls, curve_collated, g_stats, c_stats):
+        bs = len(curve_collated)
+        return cls(
+            None, None, curve_collated,
+            torch.zeros(bs, NUM_CONSTRAINTS, dtype=torch.bool),
+            False, False, g_stats, c_stats)
+
+##############################################################
+# Symmetry and Connectivity Constraints
+##############################################################
 def get_mask_face_token(state, constraints_unsat, n_faces_unsat, constraints_sat_all_faces=None, device='cpu'):
     # default: stop token entry is true
     graph = state.graph_collated
@@ -83,8 +155,6 @@ def get_mask_stop_token(state, search_cfg, num_nodes, n_faces_unsat, device='cpu
                 mask_stop_token,
                 torch.unsqueeze(
                     torch.ge(num_nodes, search_cfg.constraint_n_nodes_max), dim=-1))
-        # print('constraints', constraints_nfaces)
-        # print('nnodes', num_nodes)
     else:
         assert num_nodes is None
 
@@ -181,11 +251,11 @@ def sample_action_aid_stop(logits_stop, mask_stop_token, mask_terminal, mcts_obj
         out = torch.tensor(out, dtype=torch.bool, device=probs.device)
     return out
 
-def sample_action_aid_node(logits_aid, mask, mcts_obj, action=None):
-    # if argmax:
-    #     probs = mask * (F.softmax(logits_aid.squeeze(-1), dim=-1)+1e-10)
-    #     out = torch.argmax(probs, dim=-1)
-    # else:
+def sample_action_aid_node(logits_aid, mask, mcts_obj, action=None, inject_noise=0.0):
+    if inject_noise > 0.0:
+        dummy = torch.ones_like(logits_aid, device=logits_aid.device)
+        logits_aid += torch.normal(0.0*dummy, logits_aid.std()*inject_noise*dummy)
+
     probs = mask * (F.softmax(logits_aid.squeeze(-1), dim=-1)+1e-10)
     probs = probs/probs.sum(dim=-1).unsqueeze(-1)
     if mcts_obj is None:
@@ -198,6 +268,10 @@ def sample_action_aid_node(logits_aid, mask, mcts_obj, action=None):
         out = torch.tensor(out, device=probs.device)
     return out
 
+##############################################################
+# Relative Densities Interface
+##############################################################
+
 def sample_action_rho(logits_rho, search_cfg, n_samples=1):
     rho = logits_rho.sample(sample_shape=torch.Size([n_samples])).transpose(0,1)
     rho = \
@@ -207,6 +281,17 @@ def sample_action_rho(logits_rho, search_cfg, n_samples=1):
             max=search_cfg.constraint_rho_max)
     # rho = logits_rho.mean.unsqueeze(-1).repeat(1,n_samples)
     return rho
+
+def run_action_rho(state, policy, search_cfg, n_samples=1, action=None):
+    embeddings = policy.get_embeddings(state)
+    logits = policy.get_rho(state, **embeddings)
+    if action is None:
+        action = sample_action_rho(logits, search_cfg, n_samples=n_samples)
+    return action, logits
+
+##############################################################
+# Action Interface
+##############################################################
 
 def run_action(state, policy, search_cfg, argmax=False, n_samples_rho=1, mcts_obj=None, action=None):
     if state.done_graph:
@@ -239,13 +324,6 @@ def get_logprob(state, action, logits, mask_obj):
             torch.logical_not(action.aid_stop).type(torch.float)*\
             F.log_softmax(logits.logits_aid_end, dim=1)[torch.arange(len(action.aid_end)), action.aid_end]
 
-        # mask_start, mask_end, mask_stop = mask_obj
-        # mask_start = mask_start[torch.arange(len(action.aid_start)), action.aid_start].unsqueeze(-1)
-        # mask_end = mask_end[torch.arange(len(action.aid_end)), action.aid_end].unsqueeze(-1)
-        # log_prob_stop = log_prob_stop * mask_stop + log_prob_stop.detach() * torch.logical_not(mask_stop)
-        # log_prob_start = log_prob_start * mask_start + log_prob_start.detach() * torch.logical_not(mask_start)
-        # log_prob_end = log_prob_end * mask_end + log_prob_end.detach() * torch.logical_not(mask_end)
-
         log_prob = log_prob_stop + log_prob_start + log_prob_end
         if state.graph_collated is not None:
             log_prob = torch.logical_not(
@@ -253,40 +331,6 @@ def get_logprob(state, action, logits, mask_obj):
             ).view(-1,1)*log_prob
         log_prob = log_prob.view(-1)
     return log_prob
-
-def get_num_nodes(state):
-    graph = state.graph_collated
-    if graph is not None:
-        batch_index, num_nodes_scattered = \
-            torch.unique(graph.graph_index[graph.graph_base_index], return_counts=True) # b x 1, b x 1
-        num_nodes = torch.zeros_like(batch_index)
-        num_nodes[batch_index] = num_nodes_scattered
-    else:
-        num_nodes = None
-    return num_nodes
-
-def get_faces_stats(state):
-    graph = state.graph_collated
-    if graph is not None:
-        constraints_cur_all = \
-            ACTION_CONSTRAINTS[graph.aid_index].to(graph.graph_index.device)  # n_nodes x n_faces
-        constraints_sat = \
-            scatter_add(
-                constraints_cur_all.type(torch.float), graph.graph_index,
-                dim=0, dim_size=len(state.curve_collated))  # b x n_faces
-        constraints_unsat = torch.eq(constraints_sat, 0)  # b x n_faces
-        n_faces_unsat = constraints_unsat.sum(dim=-1)
-
-        constraints_nfaces = \
-            torch.sum(torch.clamp(scatter_add(
-                ACTION_CONSTRAINTS[graph.aid_index].type(torch.float).to(graph.graph_index.device),
-                graph.graph_index, dim=0, dim_size=constraints_unsat.shape[0]), min=0.0, max=1.0), dim=-1)
-        # constraints_sat = torch.eq(constraints_nfaces, 4)
-        assert torch.all(constraints_nfaces == 4 - n_faces_unsat)
-    else:
-        constraints_unsat = None
-        n_faces_unsat = None
-    return constraints_unsat, n_faces_unsat
 
 def run_action_graph(state, policy, search_cfg, mcts_obj=None, action=None):
     if mcts_obj is not None:
@@ -380,88 +424,23 @@ def run_action_graph(state, policy, search_cfg, mcts_obj=None, action=None):
     mask_obj = mask_start, mask_end, mask_stop
     return action, logits, mask_obj
 
-class LogitGraphObj:
-    def __init__(self, logits_stop, logits_aid_start, logits_aid_end):
-        self.logits_stop = logits_stop
-        self.logits_aid_start = logits_aid_start
-        self.logits_aid_end = logits_aid_end
+##############################################################
+# Reward Interface
+##############################################################
 
-    def to(self, device):
-        self.logits_stop = self.logits_stop.to(device)
-        self.logits_aid_start = self.logits_aid_start.to(device)
-        self.logits_aid_end = self.logits_aid_end.to(device)
-
-class ActionGraphObj:
-    def __init__(self, aid_stop, aid_start, aid_end):
-        self.aid_stop = aid_stop
-        self.aid_start = aid_start
-        self.aid_end = aid_end
-
-    def to(self, device):
-        self.aid_stop = self.aid_stop.to(device)
-        self.aid_start = self.aid_start.to(device)
-        self.aid_end = self.aid_end.to(device)
-
-def run_action_rho(state, policy, search_cfg, n_samples=1, action=None):
-    embeddings = policy.get_embeddings(state)
-    logits = policy.get_rho(state, **embeddings)
-    if action is None:
-        action = sample_action_rho(logits, search_cfg, n_samples=n_samples)
-    return action, logits
-
-class StateCollated():
-    def __init__(self, graph_collated, rho_collated, curve_collated,
-                 constraints, done_graph, done_rho, g_stats, c_stats):
-        self.graph_collated = graph_collated
-        self.rho_collated = rho_collated
-        self.curve_collated = curve_collated
-        self.constraints = constraints
-        self.done_graph = done_graph
-        self.done_rho = done_rho
-        self.g_stats = g_stats
-        self.c_stats = c_stats
-
-    def __len__(self):
-        return len(self.curve_collated)
-
-    def is_done_graph(self):
-        return False not in self.constraints
-
-    def is_done_rho(self):
-        return self.rho_collated is not None
-
-    def get_curve(self):
-        return self.curve_collated
-
-    def to(self, device):
-        if self.graph_collated is not None:
-            self.graph_collated.to(device)
-        if self.curve_collated is not None:
-            self.curve_collated.to(device)
-        if self.rho_collated is not None:
-            self.rho_collated = self.rho_collated.to(device)
-        if self.constraints is not None:
-            self.constraints = self.constraints.to(device)
-
-
-    @classmethod
-    def init_initial_state(cls, curve_collated, g_stats, c_stats):
-        bs = len(curve_collated)
-        return cls(
-            None, None, curve_collated,
-            torch.zeros(bs, NUM_CONSTRAINTS, dtype=torch.bool),
-            False, False, g_stats, c_stats)
-
-def get_reward_rho_binary_search(next_state_collated, model_surrogate, search_cfg, dataset, graph_true,
+def get_reward_rho_binary_search(next_state_collated, model_surrogate, search_cfg, dataset_forward, dataset_inverse, graph_true,
                                  PSU_specific_train_reward=True, device=None):
-    def evaluate_rho(rho_old, rho_new, r_li, reward_best, curve_best, graph):
+    def evaluate_rho(rho_old, rho_new, r_li, reward_best, curve_best, curve_true, graph):
         r_new = rho3r(rho_old, rho_new, r_li)
-        graph.update_radius(r_new, rho_new, is_zscore=dataset.dataset.is_zscore_graph, g_stats=dataset.dataset.g_stats)
+        graph.update_radius(r_new, rho_new, is_zscore=dataset_forward.dataset.is_zscore_graph, g_stats=dataset_forward.dataset.g_stats)
         with torch.no_grad():
             model_surrogate_prediction = model_surrogate.inference(graph)
             reward, _ = get_reward_helper(
-                curve_true, model_surrogate_prediction, search_cfg, dataset,
+                curve_true, model_surrogate_prediction, search_cfg, dataset_forward, dataset_inverse,
                 PSU_specific_train_reward=PSU_specific_train_reward)
+            support = 0.0 * torch.tensor([get_support(g) for g in graph.g_li]).to(device)
+            # print(f'@@@ ratio: {reward.mean()}, support: {support.mean()}')
+            reward += support
         curve = get_curve_helper(model_surrogate_prediction)
         indices_to_update = torch.ge(reward.to(reward_best.device), reward_best)
         reward_best = torch.maximum(reward.to(reward_best.device), reward_best)
@@ -473,7 +452,7 @@ def get_reward_rho_binary_search(next_state_collated, model_surrogate, search_cf
             base_cell=DATASET_CFG['base_cell'],
             rm_redundant=DATASET_CFG['rm_redundant'],
             rho=next_state_collated.rho_collated[:,0],
-            is_zscore=dataset.dataset.is_zscore_graph
+            is_zscore=dataset_forward.dataset.is_zscore_graph
         )
     graph.to(device)
 
@@ -491,35 +470,23 @@ def get_reward_rho_binary_search(next_state_collated, model_surrogate, search_cf
             rho_best[indices_to_update] = rho_new[indices_to_update]
     else:
         rho_lower = search_cfg.constraint_rho_min * torch.ones_like(rho_old, dtype=torch.float, device=rho_old.device)
-        # rho_lower = graph_true.feats_rho.to(rho_old.device)
         rho_upper = search_cfg.constraint_rho_max * torch.ones_like(rho_old, dtype=torch.float, device=rho_old.device)
-        print(-1, rho_lower[:5])
-        print(-1, rho_upper[:5])
 
         reward_best, curve_best, _ = \
-            evaluate_rho(rho_old, rho_lower, r_li, reward_best, curve_best, graph)
+            evaluate_rho(rho_old, rho_lower, r_li, reward_best, curve_best, curve_true, graph)
         reward_best, curve_best, indices_upper_ge_lower = \
-            evaluate_rho(rho_old, rho_upper, r_li, reward_best, curve_best, graph)
+            evaluate_rho(rho_old, rho_upper, r_li, reward_best, curve_best, curve_true, graph)
         rho_best = deepcopy(rho_lower)
         rho_best[indices_upper_ge_lower] = rho_upper[indices_upper_ge_lower]
 
         for asdf in range(search_cfg.n_iterations_rho_binary_search):
             rho_mid = rho_lower + (asdf+1) / (search_cfg.n_iterations_rho_binary_search+1) * (rho_upper - rho_lower)
-            print(rho_mid[0])
-            # rho_mid = (rho_upper + rho_lower) / 2
             reward_best, curve_best, indices_to_update = \
-                evaluate_rho(rho_old, rho_mid, r_li, reward_best, curve_best, graph)
+                evaluate_rho(rho_old, rho_mid, r_li, reward_best, curve_best, curve_true, graph)
             rho_best[indices_to_update] = rho_mid[indices_to_update]
 
-            # rho_lower[indices_upper_ge_lower] = \
-            #     rho_mid[indices_upper_ge_lower]
-            # rho_upper[torch.logical_not(indices_upper_ge_lower)] = \
-            #     rho_mid[torch.logical_not(indices_upper_ge_lower)]
-
-            # indices_upper_ge_lower = torch.logical_xor(indices_to_update, indices_upper_ge_lower)
-
     r_best = rho3r(rho_old, rho_best, r_li)
-    graph.update_radius(r_best, rho_best, is_zscore=dataset.dataset.is_zscore_graph, g_stats=dataset.dataset.g_stats)
+    graph.update_radius(r_best, rho_best, is_zscore=dataset_forward.dataset.is_zscore_graph, g_stats=dataset_forward.dataset.g_stats)
     for g, rho, r in zip(graph.g_li, rho_best, r_best):
         g.graph['rho'] = rho.item()
         for eid in g.edges():
@@ -560,6 +527,9 @@ def get_reward(next_state_collated, model_surrogate, search_cfg, dataset, graph_
         with torch.no_grad():
             model_surrogate_prediction = model_surrogate.inference(graph)
             reward, _ = get_reward_helper(curve_true, model_surrogate_prediction, search_cfg, dataset)
+            support = 0.0 * torch.tensor([get_support(g) for g in graph.g_li]).to(device)
+            print(f'@@@ ratio: {reward.mean()}, support: {support.mean()}')
+            reward += support
         curve = get_curve_helper(model_surrogate_prediction)
 
         indices_to_update = torch.ge(reward.to(reward_best.device), reward_best)
@@ -567,47 +537,21 @@ def get_reward(next_state_collated, model_surrogate, search_cfg, dataset, graph_
         curve_best = curve.update(torch.logical_not(indices_to_update), curve_best)
     return reward_best, graph, curve_best
 
-def get_curve_helper(model_surrogate_prediction):
-    c_shape, c_magnitude, c_shape_uncertainty, c_magnitude_uncertainty = model_surrogate_prediction
-    curve = CObj(
-        c_magnitude=c_magnitude,
-        c_shape=c_shape,
-        c_magnitude_std=c_magnitude_uncertainty,
-        c_shape_std=c_shape_uncertainty)
-    return curve
-
 def get_reward_helper(curve_true, model_surrogate_prediction, search_cfg, dataset,
-                      silent=False, skip_processing=False, PSU_specific_train_reward=True):
-    # mse = torch.nn.MSELoss(reduction='none')
+                      silent=False, skip_processing=False, PSU_specific_train_reward=True): # v2
     c_shape, c_magnitude, c_shape_uncertainty, c_magnitude_uncertainty = model_surrogate_prediction
     c_pred_mean, (c_pred_UB, c_pred_LB) = \
         dataset.dataset.unnormalize_curve(
             c_magnitude, c_shape,
             c_magnitude_u=c_magnitude_uncertainty,
             c_shape_u=c_shape_uncertainty)
-    c_pred = c_pred_mean # torch.abs(c_pred_mean)
-    r_uncertainty = \
-        torch.mean((c_pred_UB-c_pred_LB).view(c_pred.shape[0], -1), dim=-1) / \
-        (torch.max(c_pred.view(c_pred.shape[0], -1), dim=-1)[0]+1e-12)
-
-    # r_magnitude = mse(curve_true.c_magnitude.to(c_magnitude.device), c_magnitude).mean(dim=-1)
-    # r_shape = mse(curve_true.c_shape.to(c_shape.device), c_shape).mean(dim=-1).mean(dim=-1)
-
+    c_pred = c_pred_mean
     c_true = \
         dataset.dataset.unnormalize_curve(
             curve_true.c_magnitude, curve_true.c_shape)[0]
-
-    # c_pred_ = torch.clamp(c_pred+40.0, min=0.0)
-    # c_true_ = torch.clamp(c_true+40.0, min=0.0)
-    # union = torch.where(torch.ge(c_true_,c_pred_), c_true_, c_pred_).squeeze(2)
-    # intersection = torch.where(torch.ge(c_true_,c_pred_), c_pred_, c_true_).squeeze(2)
-    # r_jaccard = torch.sum(intersection, dim=-1) / torch.sum(union, dim=-1)
-    # r_main = r_jaccard
-
-    # c_true = \
-    #     torch.abs(dataset.dataset.unnormalize_curve(
-    #         curve_true.c_magnitude, curve_true.c_shape)[0])
-
+    r_uncertainty = \
+        torch.mean((c_pred_UB-c_pred_LB).view(c_pred.shape[0], -1), dim=-1) / \
+        (torch.max(c_pred.view(c_pred.shape[0], -1), dim=-1)[0]+1e-12)
     if TASK == 'stress_strain':
         union = torch.where(torch.ge(c_true,c_pred), c_true, c_pred).squeeze(2)
         intersection = torch.where(torch.ge(c_true,c_pred), c_pred, c_true).squeeze(2)
@@ -626,10 +570,7 @@ def get_reward_helper(curve_true, model_surrogate_prediction, search_cfg, datase
             c_true_ = torch.clamp(c_true+40.0, min=0.0)
             union = torch.where(torch.ge(c_true_,c_pred_), c_true_, c_pred_).squeeze(2)
             intersection = torch.where(torch.ge(c_true_,c_pred_), c_pred_, c_true_).squeeze(2)
-            # w = torch.tensor(([1.0]*64) + ([1/6]*(256-64)), device=union.device).unsqueeze(0)
             r_jaccard = torch.sum(intersection, dim=-1) / torch.sum(union, dim=-1)
-            if any(r_jaccard > 1.0):
-                asdf = None
             r_main = r_jaccard
         else:
             if not skip_processing:
@@ -646,33 +587,25 @@ def get_reward_helper(curve_true, model_surrogate_prediction, search_cfg, datase
             else:
                 r_main = (c_pred == c_true).float().squeeze(dim=-1).mean(dim=-1)
 
-    # r_main = \
-    #     ((2*torch.logical_xor(
-    #         c_true.to(torch.bool),
-    #         torch.gt(c_pred, bin)).float()-1.0) * -torch.abs(c_pred-bin)
-    #     ).squeeze(dim=-1).mean(dim=-1)
-
     if not silent:
-        # magnitude={to_item(r_magnitude.mean()):.3f}{PLUS_MINUS}{to_item(r_magnitude.std()):.3f},\
-        # shape={to_item(r_shape.mean()):.3f}{PLUS_MINUS}{to_item(r_shape.std()):.3f},\
         print(f'rewards: \
          jaccard={to_item(r_main.mean()):.3f}{PLUS_MINUS}{to_item(r_main.std()):.3f}')
     reward = \
         search_cfg.jaccard_coeff * r_main + \
         search_cfg.uncertainty_coeff * r_uncertainty
-        # search_cfg.magnitude_coeff * r_magnitude + \
-        # search_cfg.shape_coeff * r_shape + \
     other = {
-        # 'mag': r_magnitude.min(),
-        # 'shape': r_shape.min(),
         'jaccard': r_main.min(),
         'uncertainty': r_uncertainty.min()
     }
     return reward, other
 
+##############################################################
+# Environment Interface
+##############################################################
+
 def run_environment_collated(
         action_type, action_collated, cur_state_collated, model_surrogate, graph_true,
-        g_stats, node_feats_index, edge_feats_index, search_cfg, dataset,
+        g_stats, node_feats_index, edge_feats_index, search_cfg, dataset_forward, dataset_inverse,
         PSU_specific_train_reward=True, device=None):
     next_state_collated = deepcopy(cur_state_collated)
     if action_type == 'rho':
@@ -684,14 +617,14 @@ def run_environment_collated(
             #get_reward_rho_binary_search
             reward, graph, curve = \
                 get_reward_rho_binary_search(
-                    next_state_collated, model_surrogate, search_cfg, dataset, graph_true,
+                    next_state_collated, model_surrogate, search_cfg, dataset_forward, dataset_inverse, graph_true,
                     PSU_specific_train_reward=PSU_specific_train_reward, device=device)
     elif action_type == 'nodes':
         if next_state_collated.graph_collated is None:
             next_state_collated.graph_collated = \
                 GraphObjCollatedv2.from_first_nodes(
                     action_collated.aid_start, g_stats, node_feats_index, edge_feats_index,
-                    dataset.dataset.edge_feat_cfg)
+                    dataset_forward.dataset.edge_feat_cfg)
             next_state_collated.graph_collated.add_new_edges(
                 action_collated.aid_start, action_collated.aid_end)
         else:
@@ -712,20 +645,6 @@ def run_environment_collated(
 
 def sample_entropy(action_type, logits, action):
     if action_type == 'nodes':
-        # entropy_start = \
-        #     -torch.mean(
-        #         torch.logical_not(action.aid_stop).type(torch.float) * \
-        #     torch.sum(
-        #         F.softmax(logits.logits_aid_start.squeeze(-1), dim=-1) * \
-        #         F.log_softmax(logits.logits_aid_start.squeeze(-1), dim=-1)
-        #     , dim=-1))
-        # entropy_end = \
-        #     -torch.mean(
-        #         torch.logical_not(action.aid_stop).type(torch.float) * \
-        #     torch.sum(
-        #         F.softmax(logits.logits_aid_end.squeeze(-1), dim=-1) * \
-        #         F.log_softmax(logits.logits_aid_end.squeeze(-1), dim=-1)
-        #     , dim=-1))
         entropy_start = torch.distributions.Categorical(logits=logits.logits_aid_start.squeeze(-1)).entropy().mean()
         entropy_end = torch.distributions.Categorical(logits=logits.logits_aid_end.squeeze(-1)).entropy().mean()
         entropy = entropy_start + entropy_end
@@ -735,3 +654,93 @@ def sample_entropy(action_type, logits, action):
         assert False
     return entropy
 
+##############################################################
+# Utility Functions
+##############################################################
+
+def get_curve_helper(model_surrogate_prediction):
+    c_shape, c_magnitude, c_shape_uncertainty, c_magnitude_uncertainty = model_surrogate_prediction
+    curve = CObj(
+        c_magnitude=c_magnitude,
+        c_shape=c_shape,
+        c_magnitude_std=c_magnitude_uncertainty,
+        c_shape_std=c_shape_uncertainty)
+    return curve
+
+def get_jaccard(c_true,c_pred):
+    union = torch.where(torch.ge(c_true,c_pred), c_true, c_pred).squeeze(2)
+    intersection = torch.where(torch.ge(c_true,c_pred), c_pred, c_true).squeeze(2)
+    r_jaccard = torch.sum(intersection, dim=-1) / torch.sum(union, dim=-1)
+    return r_jaccard
+
+def get_num_nodes(state):
+    graph = state.graph_collated
+    if graph is not None:
+        batch_index, num_nodes_scattered = \
+            torch.unique(graph.graph_index[graph.graph_base_index], return_counts=True) # b x 1, b x 1
+        num_nodes = torch.zeros_like(batch_index)
+        num_nodes[batch_index] = num_nodes_scattered
+    else:
+        num_nodes = None
+    return num_nodes
+
+def get_faces_stats(state):
+    graph = state.graph_collated
+    if graph is not None:
+        constraints_cur_all = \
+            ACTION_CONSTRAINTS[graph.aid_index].to(graph.graph_index.device)  # n_nodes x n_faces
+        constraints_sat = \
+            scatter_add(
+                constraints_cur_all.type(torch.float), graph.graph_index,
+                dim=0, dim_size=len(state.curve_collated))  # b x n_faces
+        constraints_unsat = torch.eq(constraints_sat, 0)  # b x n_faces
+        n_faces_unsat = constraints_unsat.sum(dim=-1)
+
+        constraints_nfaces = \
+            torch.sum(torch.clamp(scatter_add(
+                ACTION_CONSTRAINTS[graph.aid_index].type(torch.float).to(graph.graph_index.device),
+                graph.graph_index, dim=0, dim_size=constraints_unsat.shape[0]), min=0.0, max=1.0), dim=-1)
+        # constraints_sat = torch.eq(constraints_nfaces, 4)
+        assert torch.all(constraints_nfaces == 4 - n_faces_unsat)
+    else:
+        constraints_unsat = None
+        n_faces_unsat = None
+    return constraints_unsat, n_faces_unsat
+
+##############################################################
+# Defects and Model Extensions
+##############################################################
+
+def get_support(g):
+    supported_nodes = mark_supported_nodes(g, z_min=-1)
+    propagate_front(g, supported_nodes)
+    ratio_i = len(supported_nodes) / len(g.nodes())
+    return ratio_i
+
+def mark_supported_nodes(graph, z_min=-1, eps=1e-06):
+    supported_nodes = set()
+
+    for node in graph.nodes():
+        if abs(graph.nodes[node]['coord'][2] - z_min) < eps:
+            supported_nodes.add(node)
+            continue
+        for neighbor in graph.neighbors(node):
+            if graph.nodes[node]['coord'][2] > graph.nodes[neighbor]['coord'][2]:
+                supported_nodes.add(node)
+                break
+    return supported_nodes
+
+def propagate_front(graph, supported_nodes, eps=1e-06):
+    visited = set()
+    queue = list(supported_nodes)
+
+    while queue:
+        current_node = queue.pop(0)
+        visited.add(current_node)
+
+        for neighbor in graph.neighbors(current_node):
+            if neighbor not in visited and abs(
+                    graph.nodes[current_node]['coord'][2] - graph.nodes[neighbor]['coord'][2]) < eps:
+                queue.append(neighbor)
+                supported_nodes.add(neighbor)
+    return supported_nodes

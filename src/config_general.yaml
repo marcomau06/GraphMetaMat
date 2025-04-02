@@ -1,117 +1,69 @@
-load_model: /home/derek/Documents/MaterialSynthesis/logs/benchmarking/forward_stressstrain_FINALv6/model_epoch_snapshot_4.pt
+load_model: /home/derek/Documents/GraphMetaMat/logs/quick_run_v2/forward_checkpoints/model_epoch_snapshot_4.pt
+load_model_IL: /home/derek/Documents/GraphMetaMat/logs/quick_run_v2/inverse_checkpoints/model_imitation.pt
+load_model_RL: /home/derek/Documents/GraphMetaMat/logs/quick_run_v2/inverse_checkpoints/best_models/model_1024.pt
 
-load_model_IL: /home/derek/Documents/MaterialSynthesis/logs/benchmarking/inverse_stressstrain_FINALv6/IL/model_imitation.pt
-load_model_RL: /home/derek/Documents/MaterialSynthesis/logs/benchmarking/inverse_stressstrain_FINALv6/application_new/best_models/model_1024.pt #/home/derek/Documents/MaterialSynthesis/logs/benchmarking/inverse_stressstrain_FINAL/applicationv6/best_models/model_512.pt
-
-log_dir: /home/derek/Documents/MaterialSynthesis/logs/benchmarking/inverse_stressstrain_FINALv6/application_new_47test_light2
+log_dir: /home/derek/Documents/GraphMetaMat/logs/quick_run_v2
 
 plot_train_data: true
 run_optuna_parallel: true
 export_results: true
 device: cuda
-#device: cpu
 
-optimizer_decay: null #0.9 #9
+optimizer_decay: null
 optimizer_RL:
-#    optimizer_name: RAdam
-#    optimizer_args:
-#        lr: 0.001 # 0.0005
     optimizer_name: Adam
     optimizer_args:
       lr: 0.001
       eps: 1.0e-3
 
 optimizer:
-#    optimizer_name: Adam
-#    optimizer_args:
-#      lr: 0.001
-#      eps: 1.0e-3
     optimizer_name: AdamW
     optimizer_args:
-      lr: 0.001 # 0.001
+      lr: 0.001
       eps: 1.0e-08
-      weight_decay: 0.1 # 0.0005
-
-# start with Low Rank then distill + finetune
-# if we just distill, equiv to just low rank decomp existing weights... -> not good
-# faster inference than LoRA but in the spirit of LoRA
+      weight_decay: 0.1
 
 forward:
     train_config:
-        num_epochs: 5000 #800 # 2000 #2000 #10 #2000
-        num_epochs_freeze_encoder: null #100
-        num_epochs_per_valid: 200 #00 #1 #100
-        best_checkpoint_metric: neg_jaccard_all #neg_jaccard_all #r2_zscore_mae #mae_shape
-        no_epoch_checkpoints: true #TODO
-        clip_grad: 5.0 #1.0 #0.05 #1.0
-        plot_num_samples_max: 50 #5000
-#        use_snapshot: null
+        num_epochs: 5000
+        num_epochs_freeze_encoder: null
+        num_epochs_per_valid: 200
+        best_checkpoint_metric: neg_jaccard_all
+        no_epoch_checkpoints: true
+        clip_grad: 5.0
+        plot_num_samples_max: 50
         use_snapshot:
             num_snapshots: 5
             t_mult: 1.0
 
-
 inverse:
     train_config:
-        num_imitation_epochs: 0 #64 #128 #1024 #4096 #1024 #512 #4096 #1024 #128 # 256 #256
-        num_iters: 1024 #512 #1024 #1024 #512 #1024 #512 #2048 #1024 #8192 #16384 #8192 #8192 #8192 #8192 #4096
-        num_iters_per_train: 8 #8 #64 #256 #32 #128
-        num_iters_per_valid: 32 #64 #8 #64 #256 #32 #128
-        save_interval: 64 #128 #1024
+        num_imitation_epochs: 0
+        num_iters: 0
+        num_iters_per_train: 8
+        num_iters_per_valid: 64
+        save_interval: 1024
         norm_adv: true
-        entropy_coeff: -0.0001 # -0.00001 #5
-        clip_grad: 0.01 #5
-        rl_algorithm: PPO #REINFORCE #TRPO #PPO
-        clip_coeff: 0.15 # only for PPO
+        entropy_coeff: 0.0
+        clip_grad: 0.01
+        rl_algorithm: PPO
+        clip_coeff: 0.15
         scale_reward: false
-        norm_reward: false #true # true
+        norm_reward: false
         use_scheduler: null
         clip_reward:
             min: -1.0
             max: 1.0
     search:
-        magnitude_coeff: 0.0 #-0.3 # 0.0 #-0.2 #-1.0
-        shape_coeff: 0.0 #-0.1 #-1.0
-        jaccard_coeff: 1.0 #0.7 #1.0 #50.0 #50.0
-        uncertainty_coeff: -0.2 #-0.2
+        magnitude_coeff: 0.0
+        shape_coeff: 0.0
+        jaccard_coeff: 1.0
+        uncertainty_coeff: -0.2
         constraint_n_nodes_min: 3
         constraint_n_nodes_max: 4
-        constraint_rho_min: 0.05 #3 #0.05
-        constraint_rho_max: 0.1 #25 #8 #0.25
-        constraint_rho_default: 0.075
-        num_runs_valid: 2 #3 # 10
-        num_runs_test: 128 #16 #64 # 64 # 128 # 128 # 50
+        constraint_rho_min: 0.02
+        constraint_rho_max: 0.3
+        constraint_rho_default: 0.15
+        num_runs_valid: 2
+        num_runs_test: 128
         n_iterations_rho_binary_search: 16
-
-#inverse:
-#    train_config:
-#        num_imitation_epochs: 128 #32 #64 #128 #1024 #4096 #1024 #512 #4096 #1024 #128 # 256 #256
-#        num_iters: 0 #128 #128 #1024 #512 #1024 #512 #2048 #1024 #8192 #16384 #8192 #8192 #8192 #8192 #4096
-#        num_iters_per_train: 32 #8 #64 #256 #32 #128
-#        num_iters_per_valid: 128 #8 #64 #256 #32 #128
-#        save_interval: 128 #1024
-#        norm_adv: true
-#        entropy_coeff: 0.0 # -0.00001 #5
-#        clip_grad: 0.01 #5
-#        rl_algorithm: PPO #REINFORCE #TRPO #PPO
-#        clip_coeff: 0.15 # only for PPO
-#        scale_reward: false
-#        norm_reward: false #true # true
-#        use_scheduler: null
-#        clip_reward:
-#            min: -1.0
-#            max: 1.0
-#
-#    search:
-#        magnitude_coeff: 0.0 #-0.3 # 0.0 #-0.2 #-1.0][=
-#        shape_coeff: 0.0 #-0.1 #-1.0
-#        jaccard_coeff: 1.0 #0.7 #1.0 #50.0 #50.0
-#        uncertainty_coeff: 0.0 #-0.2 #-0.2
-#        constraint_n_nodes_min: 3
-#        constraint_n_nodes_max: 4
-#        constraint_rho_min: 0.05 #0.05 0.02 #3 #0.05
-#        constraint_rho_max: 0.25 #0.25 0.3 #8 #0.25
-#        constraint_rho_default: 0.15
-#        num_runs_valid: 2 #3 # 10
-#        num_runs_test: 256 #512 #64 # 64 # 128 # 128 # 50
-#        n_iterations_rho_binary_search: 16 #16
