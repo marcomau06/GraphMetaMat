@@ -32,16 +32,21 @@ optuna==3.3.0
 
 ### Models and Configurations
 
-Please download the models and configurations from: https://drive.google.com/drive/folders/1KLJfp8dODqC7Ua4AzwF6ggcjVHnZdGvk?usp=drive_link.
+Please download the models and configurations from: https://drive.google.com/drive/folders/1YfSF-PbeHZ1IElxiN_wO-pMEfKGIWvZU
 
 Place it in the following directory structure: 
 ```
 /path/to/GraphMetaMat/logs
 ```
 
+### Weights
+
+Please download the model checkpoints from: https://drive.google.com/drive/folders/1VmB7y9wTI0vSrpx0g5lh4TVQgIC6UZr8
+
+
 ### Datasets
 
-Please download the `stress_strain` datasets from: https://drive.google.com/drive/folders/1Vl5Bhjhss7YOZdxGr1FWZXsZX20l2Ln5?usp=sharing.
+Please download the preprocessed datasets (e.g., `stress_strain`) datasets from: https://drive.google.com/drive/folders/13ga9DFFtsHcHGPEgc3eeJBqvX4KlEJK-
 
 Place it in the following directory structure: 
 
