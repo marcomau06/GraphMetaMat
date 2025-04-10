@@ -43,6 +43,10 @@ Place it in the following directory structure:
 
 Please download the model checkpoints from: https://drive.google.com/drive/folders/1VmB7y9wTI0vSrpx0g5lh4TVQgIC6UZr8
 
+Place it in the following directory structure: 
+```
+/path/to/GraphMetaMat/checkpoints
+```
 
 ### Datasets
 
@@ -73,14 +77,14 @@ Next, set the path to the datasets in `config_dataset.yaml`:
 
 ```
 dataset_RL:
-    root_graph: /path/to/GraphMetaMat/dataset/stress_strain/data_inverse
-    root_curve: /path/to/GraphMetaMat/dataset/stress_strain/data_inverse
-    root_mapping: /path/to/GraphMetaMat/dataset/stress_strain/data_inverse
+    root_graph: /path/to/GraphMetaMat/dataset/stress_strain/standard
+    root_curve: /path/to/GraphMetaMat/dataset/stress_strain/standard
+    root_mapping: /path/to/GraphMetaMat/dataset/stress_strain/standard
 
 dataset:
-    root_graph: /path/to/GraphMetaMat/dataset/stress_strain/data_forward
-    root_curve: /path/to/GraphMetaMat/dataset/stress_strain/data_forward
-    root_mapping: /path/to/GraphMetaMat/dataset/stress_strain/data_forward
+    root_graph: /path/to/GraphMetaMat/dataset/stress_strain/standard
+    root_curve: /path/to/GraphMetaMat/dataset/stress_strain/standard
+    root_mapping: /path/to/GraphMetaMat/dataset/stress_strain/standard
 ```
 
 Next, set the device flag (GPU or CPU) in `/path/to/GraphMetaMat/src/config_general.yaml`:
@@ -117,7 +121,7 @@ See [Run Training and Inference](#run-training-and-inference).
 
 To run inference, follow the same steps as [Quick Run](#quick-run) but (1) obtain the configurations from a `/path/to/GraphMetaMat/logs/*_inverse` directory, (2) set `dataset` and `dataset_RL` in `config_dataset.yaml` accordingly, (3) set `load_model_IL`, `load_model_RL` and `load_model` in `config_model.yaml` following [Trained Models](#trained-models), and **(4) set `num_epochs`, `num_imitation_epochs`, and `num_iters` to be `0` in `config_general.yaml`**.
 
-## Run Training and Inference [Experimental]
+## Run Training and Inference
 ### Forward Model
 
 All the preset configurations in the log files from [Models and Configurations](#models-and-configurations) are by default for training and inference. 
@@ -178,13 +182,6 @@ ETH_FULL_C_VECTOR = False
 TASK = 'transmission'
 ```
 
-### Pretraining [Deprecated]
-
-Update the configuration in `src/config.py` as follows:
-```
-ETH_FULL_C_VECTOR = True
-TASK = 'stress_strain'
-```
 # Benchmark models and data
 
 To reproduce the benchmark results, please download the models and plotting scripts from https://drive.google.com/drive/folders/1takiWy7GFp5SNolhbSbNfM4siOQqOEXP, and the corresponding datasets from https://drive.google.com/drive/folders/1FlWRNBnQCLLWkXHp7CXuCT-A5HZPrxSk .
