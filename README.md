@@ -185,3 +185,7 @@ Update the configuration in `src/config.py` as follows:
 ETH_FULL_C_VECTOR = True
 TASK = 'stress_strain'
 ```
+# Benchmark models and data
+
+To reproduce the benchmark results, please download the models and plotting scripts from https://drive.google.com/drive/folders/1takiWy7GFp5SNolhbSbNfM4siOQqOEXP, and the corresponding datasets from https://drive.google.com/drive/folders/1FlWRNBnQCLLWkXHp7CXuCT-A5HZPrxSk .
+To reproduce the benchmark results, please download models, plotting scripts, and datasets from:  and 
