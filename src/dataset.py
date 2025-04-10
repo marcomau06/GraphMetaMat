@@ -23,7 +23,6 @@ from src.dataset_feats_node import NODE_FEAT_CFG, get_node_feats
 from src.generative_graph.tesellate import tesselate, tesselate_torch, rm_redundant_nodes, rm_double_edges
 from src.dataset_preprocessing_collated import DATASET_CFG
 from src.config import args, ETH_FULL_C_VECTOR
-from src.gen_unseen_curve import gen_unseen_seq
 
 EDGE_DISCR = 5
 USE_BINNING = False
@@ -175,12 +174,6 @@ class DataLoaderFactory:
                 binning_dict=self.binning_dict,
                 apply_patch=apply_patch
             )
-        # unseen_se = gen_unseen_seq(
-        #     '/'.join(self.root_graph.split('/')[:-1] + ['Fine_tuning_data']),
-        #     self.digitize_cfg['n_freq'], shuffle_on=False, dist_limit=0.25, un_curves=1_000)
-        # self.unseen_se_train = unseen_se[:int(0.9*len(unseen_se))]
-        # self.unseen_se_valid = unseen_se[int(0.9*len(unseen_se)):int(0.95*len(unseen_se))]
-        # self.unseen_se_test = unseen_se[int(0.95*len(unseen_se)):]
 
     def get_train_dataset_contrastive(self):
         return self._get_dataset_contrastive(
