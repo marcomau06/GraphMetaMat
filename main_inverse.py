@@ -12,6 +12,7 @@ from src.generative_graph.env_v2 import get_reward_helper, get_curve_helper, get
 from src.config import args
 from src.utils import CObj, log_dir, to_list, get_optimizer
 from pprint import pformat
+from  collections import defaultdict
 
 import numpy as np
 import os
@@ -283,6 +284,20 @@ def main():
     #####################################################
 
     print(reward_train_log)
+
+    print('Results:')
+    metric_dict = defaultdict(list)
+    for curve_dict in plot_obj[3]:
+        from src.generative_graph.env_v2 import get_jaccard
+        metric_dict['mae'].append(np.mean(np.abs(curve_dict['FwdModel(Pred Graph)'][0] - curve_dict['True Curve'][0])))
+        metric_dict['mse'].append(np.mean((curve_dict['FwdModel(Pred Graph)'][0] - curve_dict['True Curve'][0])**2))
+        metric_dict['jaccard'].append(get_jaccard(
+            torch.tensor(curve_dict['FwdModel(Pred Graph)'][0]).view(1,-1,1),
+            torch.tensor(curve_dict['True Curve'][0]).view(1,-1,1)).item())
+    for k, v in metric_dict.items():
+        print(f'{k}: {np.mean(np.array(v))}')
+
+
     print(f'Time taken: {time.time() - t0}s')
 
 if __name__ == '__main__':

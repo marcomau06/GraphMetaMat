@@ -1,8 +1,8 @@
-load_model: /home/derek/Documents/GraphMetaMat/logs/quick_run_v2/forward_checkpoints/model_epoch_snapshot_4.pt
-load_model_IL: /home/derek/Documents/GraphMetaMat/logs/quick_run_v2/inverse_checkpoints/model_imitation.pt
-load_model_RL: /home/derek/Documents/GraphMetaMat/logs/quick_run_v2/inverse_checkpoints/best_models/model_1024.pt
+load_model: /home/derek/Documents/GraphMetaMat/logs/quick_run/forward_checkpoints/model_epoch_snapshot_4.pt
+load_model_IL: /home/derek/Documents/GraphMetaMat/logs/quick_run/inverse_checkpoints/model_imitation.pt
+load_model_RL: /home/derek/Documents/GraphMetaMat/logs/quick_run/inverse_checkpoints/best_models/model_1024.pt
 
-log_dir: /home/derek/Documents/GraphMetaMat/logs/quick_run_v2
+log_dir: /home/derek/Documents/GraphMetaMat/logs/quick_run
 
 plot_train_data: true
 run_optuna_parallel: true

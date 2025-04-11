@@ -101,7 +101,11 @@ $python3 main_inverse.py
 
 You should see the following output, which reproduces our results from the stress-strain experiments:
 ```
-TODO
+Results:
+mae: 0.0005315262824296951
+mse: 2.246857320642448e-06
+jaccard: 0.8847618663235556
+Time taken: 2667.6254324913025s
 ```
 
 If you see this output, congratulations! You have successfully ran the model.
