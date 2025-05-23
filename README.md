@@ -9,10 +9,13 @@ Below is a quick-start tutorial for running inference using a model trained on s
 # Quick Run
 
 ## Installation
-
+To conduct similar analyses as in the paper, begin by cloning this repository:
+```
+git clone https://github.com/marcomau06/GraphMetaMat.git
+```
+Please ensure you have the below dependencies (exact versions recommended but may not be necessary):
 ### Requirements
 
-Please ensure you have the below dependencies (exact versions recommended but may not be necessary):
 ```
 bidict==0.22.0
 matplotlib==3.1.2
@@ -35,10 +38,7 @@ PyYAML==6.0
 dtaidistance==2.3.10
 optuna==3.3.0
 ```
-To conduct similar analyses as in the paper, begin by cloning this repository:
-```
-git clone https://github.com/marcomau06/GraphMetaMat.git
-```
+
 
 
 ### Models and Configurations
