@@ -158,3 +158,6 @@ TASK = 'transmission'
 ## Benchmark models and data
 
 To reproduce the benchmark results, please download the models and plotting scripts from the [figshare data repository](https://doi.org/10.6084/m9.figshare.28773806).
+
+## Citation
+If this code is useful for your research, please cite our [paper]().
