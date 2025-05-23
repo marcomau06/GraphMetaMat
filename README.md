@@ -37,7 +37,7 @@ dtaidistance==2.3.10
 optuna==3.3.0
 ```
 
-Next, download the data, the trained models and configuration files, `config_general.py`, `config_dataset.py`, and `config_model.py`, from the figshare data repository https://doi.org/10.6084/m9.figshare.28773806. The three config files control the model, data, and directory settings. All generated outputs and trained model files are saved to a log file, specified by the `log_dir` parameter of `config_general.py`. To run inference, `log_dir` that contains the trained model should be specified.
+Next, download the data, the trained models and configuration files, `config_general.py`, `config_dataset.py`, and `config_model.py`, from the [figshare data repository](https://doi.org/10.6084/m9.figshare.28773806). The three config files control the model, data, and directory settings. All generated outputs and trained model files are saved to a log file, specified by the `log_dir` parameter of `config_general.py`. To run inference, `log_dir` that contains the trained model should be specified.
 
 Overwrite the `config_general.py`, `config_dataset.py`, and `config_model.py` from the `/path/to/GraphMetaMat/logs/quick_run` directory to the `/path/to/GraphMetaMat` directory. Next, set the `log_dir` in `config_general.yaml` to the directory that contains the trained model:
 
@@ -92,7 +92,7 @@ During RL, a pre-trained forward model (structure-to-curve) predicts the mechani
 Below are instructions to train and deploy both models.
 
 ### Forward Model
-All the preset configurations in the log files in the figshare data repository https://doi.org/10.6084/m9.figshare.28773806 are by default for training and inference. To run training and inference, follow the same steps from [Quick Run](#quick-run) but (1) obtain the configurations from a `/path/to/GraphMetaMat/logs/*_forward` directory, (2) set `dataset` in `config_dataset.yaml` accordingly, (3) set the `load_model_IL`, `load_model_RL` and `load_model` in `config_model.yaml` following [Trained Models](#trained-models), and **(4) set `log_dir` in `config_general.yaml` to be an empty directory, where the trained model and inference results will be saved.**
+All the preset configurations in the log files in the [figshare data repository](https://doi.org/10.6084/m9.figshare.28773806) are by default for training and inference. To run training and inference, follow the same steps from [Quick Run](#quick-run) but (1) obtain the configurations from a `/path/to/GraphMetaMat/logs/*_forward` directory, (2) set `dataset` in `config_dataset.yaml` accordingly, (3) set the `load_model_IL`, `load_model_RL` and `load_model` in `config_model.yaml` following [Trained Models](#trained-models), and **(4) set `log_dir` in `config_general.yaml` to be an empty directory, where the trained model and inference results will be saved.**
 
 Run the model with:
 ```
@@ -102,7 +102,7 @@ To predict transmission curves, see [Different Types of Curves](#Transmission-Cu
 
 ### Inverse Model
 
-All the preset configurations in the log files in the figshare data repository https://doi.org/10.6084/m9.figshare.28773806 are by default for training. To run training and inference, follow the same steps from [Quick Run](#quick-run) but (1) obtain the configurations from a `/path/to/GraphMetaMat/logs/*_inverse` directory, (2) set `dataset` and `dataset_RL` in `config_dataset.yaml` accordingly, where the trained model and inference results will be saved, and (3) set the `load_model_IL`, `load_model_RL` and `load_model` in `config_model.yaml` following [Trained Models](#trained-models), and (4) **set `log_dir` in `config_general.yaml` to be an empty directory, where the trained model and inference results will be saved.**
+All the preset configurations in the log files in the [figshare data repository](https://doi.org/10.6084/m9.figshare.28773806) are by default for training. To run training and inference, follow the same steps from [Quick Run](#quick-run) but (1) obtain the configurations from a `/path/to/GraphMetaMat/logs/*_inverse` directory, (2) set `dataset` and `dataset_RL` in `config_dataset.yaml` accordingly, where the trained model and inference results will be saved, and (3) set the `load_model_IL`, `load_model_RL` and `load_model` in `config_model.yaml` following [Trained Models](#trained-models), and (4) **set `log_dir` in `config_general.yaml` to be an empty directory, where the trained model and inference results will be saved.**
 
 To run only inference, follow the same steps as [Quick Run](#quick-run) but (1) obtain the configurations from a `/path/to/GraphMetaMat/logs/*_inverse` directory, (2) set `dataset` and `dataset_RL` in `config_dataset.yaml` accordingly, (3) set `load_model_IL`, `load_model_RL` and `load_model` in `config_model.yaml` following [Trained Models](#trained-models), and **(4) set `num_epochs`, `num_imitation_epochs`, and `num_iters` to be `0` in `config_general.yaml`**.
 
@@ -157,4 +157,4 @@ TASK = 'transmission'
 
 ## Benchmark models and data
 
-To reproduce the benchmark results, please download the models and plotting scripts from the figshare repository https://doi.org/10.6084/m9.figshare.28773806.
+To reproduce the benchmark results, please download the models and plotting scripts from the [figshare data repository](https://doi.org/10.6084/m9.figshare.28773806).
