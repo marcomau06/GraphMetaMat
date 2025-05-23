@@ -84,7 +84,12 @@ Time taken: 2667.6254324913025s
 If you see this output, congratulations! You have successfully ran the model and generated metamaterials with target nonlinear stress-strain curves. 
 
 # General Usage
-The autoregressive inverse model relies on a forward model - which predicts the mechanical response given the graph representation of the metamaterial.
+GraphMetaMat consists of two components: a forward model and an inverse model.
+The inverse model is a policy network conditioned on a target curve. It autoregressively generates the graph representation of a truss-based metamaterial. This model is trained using a combination of imitation learning (IL) and reinforcement learning (RL).
+
+During RL, a pre-trained forward model (structure-to-curve) predicts the mechanical response—such as a stress–strain or transmission curve—of the generated structure. The mismatch between the predicted and target curves is used to guide the policy’s optimization.
+
+Below are instructions to train and deploy both models.
 
 ### Forward Model
 All the preset configurations in the log files in the figshare data repository https://doi.org/10.6084/m9.figshare.28773806 are by default for training and inference. To run training and inference, follow the same steps from [Quick Run](#quick-run) but (1) obtain the configurations from a `/path/to/GraphMetaMat/logs/*_forward` directory, (2) set `dataset` in `config_dataset.yaml` accordingly, (3) set the `load_model_IL`, `load_model_RL` and `load_model` in `config_model.yaml` following [Trained Models](#trained-models), and **(4) set `log_dir` in `config_general.yaml` to be an empty directory, where the trained model and inference results will be saved.**
@@ -145,6 +150,6 @@ ETH_FULL_C_VECTOR = False
 TASK = 'transmission'
 ```
 
-# Benchmark models and data
+## Benchmark models and data
 
 To reproduce the benchmark results, please download the models and plotting scripts from the figshare repository https://doi.org/10.6084/m9.figshare.28773806.
