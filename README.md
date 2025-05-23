@@ -87,7 +87,7 @@ If you see this output, congratulations! You have successfully ran the model and
 GraphMetaMat consists of two components: a forward model and an inverse model.
 The inverse model is a policy network conditioned on a target curve. It autoregressively generates the graph representation of a truss-based metamaterial. This model is trained using a combination of imitation learning (IL) and reinforcement learning (RL).
 
-During RL, a pre-trained forward model (structure-to-curve) predicts the mechanical response—such as a stress–strain or transmission curve—of the generated structure. The mismatch between the predicted and target curves is used to guide the policy’s optimization.
+During RL, a pre-trained forward model (structure-to-curve) predicts the mechanical response—such as a stress–strain or transmission curve—of the generated structure. The mismatch between the predicted and target curves is used to guide the policy’s optimization. Monte Carlo Tree Search (MCTS) is used at inference to improve inverse design performance.
 
 Below are instructions to train and deploy both models.
 
@@ -111,6 +111,11 @@ Run the model with:
 $python3 main_inverse.py
 ```
 To target transmission curves, see [Different Types of Curves](#Transmission-Curve).
+
+
+To experiment with different setups simply change the config files: `config_general.py`, `config_dataset.py`, and `config_model.py`. Here you can adjust all hyperparameters, including network architectures, training and search settings. 
+
+For further information, please first refer to the [paper](), the [Supplementary Information]() or reach out to Derek Xu or Marco Maurizi.
 
 ## Trained Models
 
