@@ -99,7 +99,7 @@ device: cpu             # if using CPU
 device: cuda            # if using GPU
 ```
 
-Run the model with:
+To reproduce the stress-strain results on the test set (split 90/5/5, known curve space), run the model with:
 ```
 $python3 main_inverse.py
 ```
