@@ -1,6 +1,6 @@
 
 # Designing metamaterials with programmable nonlinear responses and geometric constraints in graph space
-
+![Demo Animation](Supplementary Video 2.gif)
 
 
 This repo contains code both to train a lattice to curve encoder and curve to lattice policy network. All code is located in the `src` directory. The entry point for the forward model is `main_forward.py`. The entry point for the inverse model is `main_inverse.py`.
