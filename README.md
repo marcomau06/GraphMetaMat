@@ -1,5 +1,5 @@
-
 # Designing metamaterials with programmable nonlinear responses and geometric constraints in graph space
+[![DOI](https://zenodo.org/badge/979538682.svg)](https://doi.org/10.5281/zenodo.15498444)
 ![Demo Animation](Supplementary%20Video%202.gif)
 
 This repository contains the code for GraphMetaMat — a graph-based, defect-aware framework for the inverse design of manufacturable truss metamaterials with nonlinear mechanical responses and geometric constraints, as described in [LINK_PAPER].
