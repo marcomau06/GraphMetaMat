@@ -1,5 +1,7 @@
+<p align="center">
 
-# Designing metamaterials with programmable nonlinear responses and geometric constraints in graph space
+    # Designing metamaterials with programmable nonlinear responses and geometric constraints in graph space
+</p>
 ![Demo Animation](Supplementary%20Video%202.gif)
 
 
