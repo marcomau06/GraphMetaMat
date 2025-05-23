@@ -69,13 +69,9 @@ Place it in the following directory structure:
 /path/to/GraphMetaMat/dataset/stress_strain
 ```
 
-## Quick Run
+Next, download the trained models and configuration files, `config_general.py`, `config_dataset.py`, and `config_model.py`, from the figshare data repository [LINK]. The three config files control the model, data, and directory settings. All generated outputs and trained model files are saved to a log file, specified by the `log_dir` parameter of `config_general.py`. To run inference, `log_dir` that contains the trained model should be specified.
 
-We specify all model and data configurations for metamaterial generation in 3 configuration files: `config_general.py`, `config_dataset.py`, and `config_model.py`. For the quick-run tutorial, we will run inference with a trained model on the stress-strain dataset. All generated otuputs and trained model files are saved to a log file. This is specified in the `log_dir` parameter of `config_general.py`. To run just inference, we need to specify `log_dir` that contains the trained model. We provide the trained models in the log files in [Models and Configurations](#models-and-configurations).
-
-First, overwrite the `config_general.py`, `config_dataset.py`, and `config_model.py` from the `/path/to/GraphMetaMat/logs/quick_run` directory to the `/path/to/GraphMetaMat` directory.
-
-Next, set the `log_dir` in `config_general.yaml` to the directory that contains the trained model:
+Overwrite the `config_general.py`, `config_dataset.py`, and `config_model.py` from the `/path/to/GraphMetaMat/logs/quick_run` directory to the `/path/to/GraphMetaMat` directory. Next, set the `log_dir` in `config_general.yaml` to the directory that contains the trained model:
 
 ```
 load_model: /path/to/GraphMetaMat/logs/quick_run/trained_model # NOTE: this is different for non quick_run setups...
@@ -83,9 +79,7 @@ load_model_IL: /path/to/GraphMetaMat/logs/quick_run/trained_model # NOTE: this i
 load_model_RL: /path/to/GraphMetaMat/logs/quick_run/trained_model # NOTE: this is different for non quick_run setups...
 log_dir: /path/to/GraphMetaMat/logs/quick_run
 ```
-
 Next, set the path to the datasets in `config_dataset.yaml`:
-
 ```
 dataset_RL:
     root_graph: /path/to/GraphMetaMat/dataset/stress_strain/standard
