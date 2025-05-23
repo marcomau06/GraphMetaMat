@@ -37,7 +37,7 @@ dtaidistance==2.3.10
 optuna==3.3.0
 ```
 
-Next, download the data, the trained models and configuration files, `config_general.py`, `config_dataset.py`, and `config_model.py`, from the [figshare data repository](https://doi.org/10.6084/m9.figshare.28773806). The three config files control the model, data, and directory settings. All generated outputs and trained model files are saved to a log file, specified by the `log_dir` parameter of `config_general.py`. To run inference, `log_dir` that contains the trained model should be specified.
+Next, download the data, checkpoints, trained models and configuration files, `config_general.py`, `config_dataset.py`, and `config_model.py`, from the [figshare data repository](https://doi.org/10.6084/m9.figshare.28773806). The three config files control the model, data, and directory settings. All generated outputs and trained model files are saved to a log file, specified by the `log_dir` parameter of `config_general.py`. To run inference, `log_dir` that contains the trained model should be specified.
 
 Overwrite the `config_general.py`, `config_dataset.py`, and `config_model.py` from the `/path/to/GraphMetaMat/logs/quick_run` directory to the `/path/to/GraphMetaMat` directory. Next, set the `log_dir` in `config_general.yaml` to the directory that contains the trained model:
 
