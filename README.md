@@ -115,7 +115,7 @@ To target transmission curves, see [Different Types of Curves](#Transmission-Cur
 
 To experiment with different setups simply change the config files: `config_general.py`, `config_dataset.py`, and `config_model.py`. Here you can adjust all hyperparameters, including network architectures, training and search settings. 
 
-For further information, please first refer to the [paper](), the [Supplementary Information]() or reach out to Derek Xu or Marco Maurizi.
+For further information, please first refer to the [paper](), the [Supplementary Information]() or reach out to [Derek Xu](derekqxu@ucla.edu) or [Marco Maurizi](marcomaurizi06@gmail.com).
 
 ## Trained Models
 
