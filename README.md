@@ -69,7 +69,7 @@ Place it in the following directory structure:
 /path/to/GraphMetaMat/dataset/stress_strain
 ```
 
-Next, download the trained models and configuration files, `config_general.py`, `config_dataset.py`, and `config_model.py`, from the figshare data repository [LINK]. The three config files control the model, data, and directory settings. All generated outputs and trained model files are saved to a log file, specified by the `log_dir` parameter of `config_general.py`. To run inference, `log_dir` that contains the trained model should be specified.
+Next, download the data, the trained models and configuration files, `config_general.py`, `config_dataset.py`, and `config_model.py`, from the figshare data repository [LINK]. The three config files control the model, data, and directory settings. All generated outputs and trained model files are saved to a log file, specified by the `log_dir` parameter of `config_general.py`. To run inference, `log_dir` that contains the trained model should be specified.
 
 Overwrite the `config_general.py`, `config_dataset.py`, and `config_model.py` from the `/path/to/GraphMetaMat/logs/quick_run` directory to the `/path/to/GraphMetaMat` directory. Next, set the `log_dir` in `config_general.yaml` to the directory that contains the trained model:
 
@@ -104,7 +104,7 @@ To reproduce the stress-strain results on the test set (split 90/5/5, known curv
 $python3 main_inverse.py
 ```
 
-You should see the following output, which reproduces our results from the stress-strain experiments:
+You should see the following output:
 ```
 Results:
 mae: 0.0005315262824296951
@@ -113,13 +113,30 @@ jaccard: 0.8847618663235556
 Time taken: 2667.6254324913025s
 ```
 
-If you see this output, congratulations! You have successfully ran the model.
+If you see this output, congratulations! You have successfully ran the model and generated metamaterials with target nonlinear stress-strain curves. 
 
 # General Usage
+The autoregressive inverse model relies on a forward model - which predicts the mechanical response given the graph representation of the metamaterial.
+### Forward Model
 
-Please first follow the steps in [Quick Run](#quick-run) to set up environment, download models, download data, and run inference.
+All the preset configurations in the log files in figshare data repository [LINK] are by default for training and inference. To run training and inference, follow the same steps from [Quick Run](#quick-run) but (1) obtain the configurations from a `/path/to/GraphMetaMat/logs/*_forward` directory, (2) set `dataset` in `config_dataset.yaml` accordingly, (3) set the `load_model_IL`, `load_model_RL` and `load_model` in `config_model.yaml` following [Trained Models](#trained-models), and **(4) set `log_dir` in `config_general.yaml` to be an empty directory, where the trained model and inference results will be saved.**
 
-For transmission datasets, see [Transmission Curves](#models-and-configurations).
+Run the model with:
+```
+$python3 main_forward.py
+```
+To predict transmission curves, see [Different Types of Curves](#Transmission-Curve).
+
+### Inverse Model
+
+All the preset configurations in the log files in figshare data repository [LINK] are by default for training. To run training and inference, follow the same steps from [Quick Run](#quick-run) but (1) obtain the configurations from a `/path/to/GraphMetaMat/logs/*_inverse` directory, (2) set `dataset` and `dataset_RL` in `config_dataset.yaml` accordingly, where the trained model and inference results will be saved, and (3) set the `load_model_IL`, `load_model_RL` and `load_model` in `config_model.yaml` following [Trained Models](#trained-models), and (4) **set `log_dir` in `config_general.yaml` to be an empty directory, where the trained model and inference results will be saved.**
+
+Run the model with:
+```
+$python3 main_inverse.py
+```
+
+
 
 ## Load Trained Model and Run Inference
 ### Forward Model
