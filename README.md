@@ -2,7 +2,9 @@
 # Designing metamaterials with programmable nonlinear responses and geometric constraints in graph space
 ![Demo Animation](Supplementary%20Video%202.gif)
 
-This repository contains the code for GraphMetaMat - a graph-based, defect-aware framework to inverse design manufacturable truss metamaterials with nonlinear mechanical responses and geometric constraints, as described in LINK_PAPER.
+This repository contains the code for GraphMetaMat — a graph-based, defect-aware framework for the inverse design of manufacturable truss metamaterials with nonlinear mechanical responses and geometric constraints, as described in [LINK_PAPER].
+
+Below is a quick-start tutorial for running inference using a model trained on stress–strain curves.
 
 # Quick Run
 
