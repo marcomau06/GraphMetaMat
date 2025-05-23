@@ -2,10 +2,7 @@
 # Designing metamaterials with programmable nonlinear responses and geometric constraints in graph space
 ![Demo Animation](Supplementary%20Video%202.gif)
 
-This repository contains the framework - GraphMetaMat - to inverse design truss metamaterials with nonlinear mechanical responses, geometric and manufacturing constraints, including fabrication-induced defects.
-
-
-This repo contains code both to train a lattice to curve encoder and curve to lattice policy network. All code is located in the `src` directory. The entry point for the forward model is `main_forward.py`. The entry point for the inverse model is `main_inverse.py`.
+This repository contains the code for GraphMetaMat - a graph-based, defect-aware framework to inverse design manufacturable truss metamaterials with nonlinear mechanical responses and geometric constraints, as described in LINK_PAPER.
 
 # Quick Run
 
@@ -36,6 +33,11 @@ PyYAML==6.0
 dtaidistance==2.3.10
 optuna==3.3.0
 ```
+To conduct similar analyses as in the paper, begin by cloning this repository:
+```
+git clone https://github.com/marcomau06/GraphMetaMat.git
+```
+
 
 ### Models and Configurations
 
