@@ -154,6 +154,128 @@ Update the configuration in `src/config.py` as follows:
 ETH_FULL_C_VECTOR = False
 TASK = 'transmission'
 ```
+## Running on Custom Datasets
+### Forward Training + Reinforcement Learning
+Step 1. Copy the configuration files from `new_dataset.zip` to `/path/to/GraphMetaMat/src`.
+Step 2. Preprocess the dataset into the same format as the pickle files in [figshare data repository](https://doi.org/10.6084/m9.figshare.28773806).
+```
+/path/to/GraphMetaMat/dataset/our_dataset
+├── train
+│   ├── graphs
+│   ├── curves
+│   └── mapping.tsv
+├── dev
+│   ├── graphs
+│   ├── curves
+│   └── mapping.tsv
+└── test
+    ├── graphs
+    ├── curves
+    └── mapping.tsv
+```
+`/path/to/GraphMetaMat/dataset/our_dataset/.../graphs` is a directory containing graphs. Each graph is represented by `[GID].gpkl`. Each graph has a unique (across splits) integer `[GID]`.
+Create `[GID].gpkl` with:
+```
+import pickle
+import networkx as nx
+from src.dataset_feats_node import get_node_feats
+from src.dataset_feats_edge import get_edge_li, get_edge_index, get_edge_feats
+g = nx.Graph() # create a networkx graph with coordinates in the range [-1,1]
+edge_li = get_edge_li(g)
+g.graph['node_feats'] = get_node_feats(g, edge_index)
+g.graph['edge_feats'] = get_edge_feats(g, edge_li)
+g.graph['edge_index'] = get_edge_index(edge_li)
+g.graph['rho'] = 1.0
+with open('/path/to/GraphMetaMat/dataset/our_dataset/.../graphs/[GID].gpkl', 'wb') as fp:
+    pickle.dump(g, fp)
+```
+`/path/to/GraphMetaMat/dataset/our_dataset/.../curves` is a directory containing curves. Each curve is represented by `[CID].pkl`. Each curve has a unique (across splits) integer `[CID]`
+Create `[CID].pkl` with:
+```
+import pickle
+import numpy as np
+c = np.arange(L)**2 # create a curve of shape (L,)
+c_xy = np.stack((np.arange(c.shape[0]), curve), axis=-1)
+c_obj = \
+    {
+        'curve': c_xy,
+        'cid': CID,
+        'is_monotonic': True
+    }
+with open('/path/to/GraphMetaMat/dataset/our_dataset/.../curves/[CID].gpkl', 'wb') as fp:
+    pickle.dump(c_obj, fp)
+```
+`/path/to/GraphMetaMat/dataset/our_dataset/.../mapping.tsv` is a list of tab seperated `[GID]` `[CID]` pairs:
+```
+[GID0]\t[CID0]
+[GID1]\t[CID1]
+[GID2]\t[CID2]
+...
+```
+Step 3.1. Set up the data directories in `/path/to/GraphMetaMat/src/config_dataset.yaml`:
+```
+dataset_RL:
+    root_graph: /path/to/GraphMetaMat/dataset/our_dataset
+    root_curve: /path/to/GraphMetaMat/dataset/our_dataset
+    root_mapping: /path/to/GraphMetaMat/dataset/our_dataset
+dataset:
+    root_graph: /path/to/GraphMetaMat/dataset/our_dataset
+    root_curve: /path/to/GraphMetaMat/dataset/our_dataset
+    root_mapping: /path/to/GraphMetaMat/dataset/our_dataset
+```
+Step 3.2. Set up the output directory in `/path/to/GraphMetaMat/src/config_general.yaml` (create an empty directory, `forward_model`, where the model output will be saved):
+```
+log_dir: /path/to/GraphMetaMat/logs/forward_model
+```
+Step 3.3. Next, set the device flag (GPU or CPU) in `/path/to/GraphMetaMat/src/config_general.yaml`:
+```
+device: cpu             # if using CPU
+device: cuda            # if using GPU
+```
+Step 4.1. Train the forward model with:
+```
+$python3 main_forward.py
+```
+Step 4.2. Set up the checkpoint directories in `/path/to/GraphMetaMat/src/config_general.yaml`:
+```
+load_model: /path/to/GraphMetaMat/logs/forward_model/model_epoch_snapshot_4.pt
+load_model_IL: null
+load_model_RL: null
+```
+Step 4.3. Set up the output directory in `/path/to/GraphMetaMat/src/config_general.yaml` (create an empty directory, `inverse_model`, where the model output will be saved):
+```
+log_dir: /path/to/GraphMetaMat/logs/inverse_model
+```
+Step 5 Train the inverse model by following [Inverse Model](#asdf), **using the configuration setup from Step 2**.
+```
+$python3 main_inverse.py
+```
+### Include Pretrained Model
+After Step 3.3, set up the checkpoint directories in `/path/to/GraphMetaMat/src/config_general.yaml`:
+```
+load_model: /path/to/GraphMetaMat/checkpoints/pretrain.pt
+load_model_IL: null
+load_model_RL: null
+```
+### Add Imitation Learning
+Imitation learning reads from a seperate data file `[GID]_polyhedron.gpkl` corresponding to `[GID].gpkl` in `/path/to/GraphMetaMat/dataset/our_dataset/.../graphs`.
+Create `[GID]_polyhedron.gpkl` with:
+```
+with open(os.path.join(pn_graphs, f'{gid}.gpkl'), 'rb') as fp:
+    g = pickle.load(fp)
+untesselate(g, start='unit_cell', end='tetrahedron', rm_redundant=True)
+assert g_tetrahedron.number_of_nodes() <= 4, \
+    f'tetrahedron has {g_tetrahedron.number_of_nodes()} nodes; graph has {g.number_of_nodes()} nodes'
+with open(os.path.join(pn_graphs, f'{gid}_polyhedron.gpkl'), 'wb') as fp:
+    pickle.dump(g_tetrahedron, fp)
+```
+After Step 4.3, add imitation learning in `/path/to/GraphMetaMat/src/config_general.yaml`:
+```
+inverse:
+    train_config:
+        num_imitation_epochs: 128
+...
+```
 
 ## Benchmark models and data
 
