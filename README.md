@@ -2,7 +2,7 @@
 [![DOI](https://zenodo.org/badge/979538682.svg)](https://doi.org/10.5281/zenodo.15498444)
 ![Demo Animation](Supplementary%20Video%202.gif)
 
-This repository contains the code for GraphMetaMat — a graph-based, defect-aware framework for the inverse design of manufacturable truss metamaterials with nonlinear mechanical responses and geometric constraints, as described in [LINK_PAPER].
+This repository contains the code for GraphMetaMat — a graph-based, defect-aware framework for the inverse design of manufacturable truss metamaterials with nonlinear mechanical responses and geometric constraints, as described in [paper](https://www.nature.com/articles/s42256-025-01067-x).
 
 Below is a quick-start tutorial for running inference using a model trained on stress–strain curves.
 
