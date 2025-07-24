@@ -2,7 +2,7 @@
 [![DOI](https://zenodo.org/badge/979538682.svg)](https://doi.org/10.5281/zenodo.15498444)
 ![Demo Animation](Supplementary%20Video%202.gif)
 
-This repository contains the code for GraphMetaMat — a graph-based, defect-aware framework for the inverse design of manufacturable truss metamaterials with nonlinear mechanical responses and geometric constraints, as described in [paper](https://www.nature.com/articles/s42256-025-01067-x).
+This repository contains the code for GraphMetaMat — a graph-based, defect-aware framework for the inverse design of manufacturable truss metamaterials with nonlinear mechanical responses and geometric constraints, as described in [paper](https://www.nature.com/articles/s42256-025-01067-x) ([free access link](https://www.nature.com/articles/s42256-025-01067-x.epdf?sharing_token=i9jr1UpJJB6u3wF8lDuRyNRgN0jAjWel9jnR3ZoTv0MxUk7DpbFuu4tOWcwlgVwYfphvtetI0EN8DBFeurYincl-bDQfOwTJ8J6pfSgKJiyXPqEOFcO8FeLrvBuYY8x7F8huiyPA6-dwOm70faCZ-O1HfD5shJNKnOdK6QPvvgs%3D)).
 
 Below is a quick-start tutorial for running inference using a model trained on stress–strain curves.
 
@@ -282,4 +282,4 @@ inverse:
 To reproduce the benchmark results, please download the models and plotting scripts from the [figshare data repository](https://doi.org/10.6084/m9.figshare.28773806).
 
 ## Citation
-If this code is useful for your research, please cite our [paper](https://www.nature.com/articles/s42256-025-01067-x).
+If this code is useful for your research, please cite our [paper](https://www.nature.com/articles/s42256-025-01067-x) ([free access link](https://www.nature.com/articles/s42256-025-01067-x.epdf?sharing_token=i9jr1UpJJB6u3wF8lDuRyNRgN0jAjWel9jnR3ZoTv0MxUk7DpbFuu4tOWcwlgVwYfphvtetI0EN8DBFeurYincl-bDQfOwTJ8J6pfSgKJiyXPqEOFcO8FeLrvBuYY8x7F8huiyPA6-dwOm70faCZ-O1HfD5shJNKnOdK6QPvvgs%3D)). Authors of this work, Rayne Zheng, Derek Qiang Xu, and Marco Maurizi, were the inventors of a U.S. Provisional Patent Application filed on December 27, 2024.
